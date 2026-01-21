@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Pickup - Maneigbbe</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="logo">
+                <h1 style="color: white; font-size: 2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">📦 Maneigbbe</h1>
+            </div>
+            <ul class="nav-links" style="display: flex; list-style: none; gap: 2rem;">
+                <li><a href="index.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Home</a></li>
+                <li><a href="tracking.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Track Package</a></li>
+                <li><a href="request-pickup.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Request Pickup</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Request Pickup Section -->
+    <section class="pickup-section" style="padding: 3rem 2rem; min-height: 70vh;">
+        <div class="container" style="max-width: 900px; margin: 0 auto;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem; color: #333;">📮 Request a Pickup</h2>
+            <p class="subtitle" style="text-align: center; color: #666; margin-bottom: 2rem; font-size: 1.1rem;">Fill out the form below and we'll pick up your package</p>
+
+            <form id="pickupForm" class="pickup-form">
+                <!-- Sender Information -->
+                <div class="form-section">
+                    <h3>Sender Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="senderName">Full Name *</label>
+                            <input type="text" id="senderName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="senderPhone">Phone Number *</label>
+                            <input type="tel" id="senderPhone" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="senderAddress">Pickup Address *</label>
+                        <input type="text" id="senderAddress" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="senderCity">City *</label>
+                            <input type="text" id="senderCity" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="senderZip">ZIP Code *</label>
+                            <input type="text" id="senderZip" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipient Information -->
+                <div class="form-section">
+                    <h3>Recipient Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recipientName">Full Name *</label>
+                            <input type="text" id="recipientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientPhone">Phone Number *</label>
+                            <input type="tel" id="recipientPhone" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipientAddress">Delivery Address *</label>
+                        <input type="text" id="recipientAddress" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recipientCity">City *</label>
+                            <input type="text" id="recipientCity" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientZip">ZIP Code *</label>
+                            <input type="text" id="recipientZip" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Package Information -->
+                <div class="form-section">
+                    <h3>Package Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="packageWeight">Weight (lbs) *</label>
+                            <input type="number" id="packageWeight" min="0.1" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="deliverySpeed">Delivery Speed *</label>
+                            <select id="deliverySpeed" required>
+                                <option value="">Select...</option>
+                                <option value="standard">Standard (3-5 days) - $5.99</option>
+                                <option value="express">Express (1-2 days) - $12.99</option>
+                                <option value="overnight">Overnight - $24.99</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="packageDescription">Package Description</label>
+                        <textarea id="packageDescription" rows="3" placeholder="Optional: Describe your package contents"></textarea>
+                    </div>
+                </div>
+
+                <!-- Estimated Price -->
+                <div class="price-estimate">
+                    <h3>Estimated Price: <span id="estimatedPrice">$0.00</span></h3>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large">Submit Pickup Request</button>
+            </form>
+
+            <!-- Success Message (hidden by default) -->
+            <div id="successMessage" class="success-message" style="display: none;">
+                <h3>✓ Pickup Request Submitted!</h3>
+                <p>Your tracking number is: <strong id="generatedTrackingNumber"></strong></p>
+                <p>We'll pick up your package within 24 hours.</p>
+                <a href="tracking.html" class="btn btn-primary">Track Your Package</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/pickup.js"></script>
+</body>
+</html>

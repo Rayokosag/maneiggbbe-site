@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Package - Maneigbbe</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="logo">
+                <h1 style="color: white; font-size: 2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">📦 Maneigbbe</h1>
+            </div>
+            <ul class="nav-links" style="display: flex; list-style: none; gap: 2rem;">
+                <li><a href="index.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Home</a></li>
+                <li><a href="tracking.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Track Package</a></li>
+                <li><a href="request-pickup.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Request Pickup</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Tracking Section -->
+    <section class="tracking-section" style="padding: 3rem 2rem; min-height: 70vh;">
+        <div class="container" style="max-width: 1000px; margin: 0 auto;">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #333;">🔍 Track Your Package</h2>
+            <form id="trackingForm" style="display: flex; gap: 1rem; max-width: 600px; margin: 0 auto 3rem; flex-wrap: wrap;">
+                <input type="text" id="trackingNumber" placeholder="Enter tracking number (e.g., MNG123456)" required style="flex: 1; min-width: 250px; padding: 1rem; border: 2px solid #667eea; border-radius: 50px; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Track 🚀</button>
+            </form>
+
+            <!-- Tracking Results (hidden by default) -->
+            <div id="trackingResults" class="tracking-results" style="display: none; background-color: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-top: 2rem;">
+                <div class="result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #f0f0f0; flex-wrap: wrap; gap: 1rem;">
+                    <h3 style="color: #333; font-size: 1.5rem;">Tracking: <span id="displayTrackingNumber" style="color: #667eea;"></span></h3>
+                    <p class="status-badge" id="currentStatus" style="padding: 0.7rem 1.5rem; border-radius: 25px; font-weight: bold; background-color: #667eea; color: white; box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);">In Transit</p>
+                </div>
+
+                <div class="package-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="info-item" style="padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border-left: 4px solid #667eea;">
+                        <strong style="display: block; margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">📍 FROM</strong>
+                        <span id="fromLocation" style="color: #333; font-size: 1.1rem; font-weight: 500;">-</span>
+                    </div>
+                    <div class="info-item" style="padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border-left: 4px solid #764ba2;">
+                        <strong style="display: block; margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">🎯 TO</strong>
+                        <span id="toLocation" style="color: #333; font-size: 1.1rem; font-weight: 500;">-</span>
+                    </div>
+                    <div class="info-item" style="padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <strong style="display: block; margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">📅 EXPECTED DELIVERY</strong>
+                        <span id="expectedDelivery" style="color: #333; font-size: 1.1rem; font-weight: 500;">-</span>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="tracking-timeline" style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem; color: #333; font-size: 1.3rem;">📦 Package Journey</h3>
+                    <div id="timeline" style="position: relative; padding-left: 2rem;">
+                        <!-- Timeline items will be inserted here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Message (hidden by default) -->
+            <div id="errorMessage" class="error-message" style="display: none; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 2rem; border-radius: 15px; text-align: center; margin-top: 2rem; box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);">
+                <p style="font-size: 1.2rem; font-weight: bold;">❌ Tracking number not found. Please check and try again.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/tracking.js"></script>
+</body>
+</html>

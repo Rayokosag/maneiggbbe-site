@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maneigbbe - Fast & Reliable Delivery Service</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>📦 Maneigbbe</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="tracking.html">Track Package</a></li>
+                <li><a href="request-pickup.html">Request Pickup</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h2 class="hero-title animate-fade-in">Deliver Anywhere, Anytime ⚡</h2>
+                    <p class="hero-subtitle animate-fade-in-delay">The fastest and most reliable delivery service. Track in real-time, delivered on time.</p>
+                    
+                    <div class="hero-stats animate-slide-up">
+                        <div class="stat-card">
+                            <div class="stat-number">15,000+</div>
+                            <div class="stat-label">Deliveries</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">98%</div>
+                            <div class="stat-label">On-Time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Support</div>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-buttons">
+                        <a href="request-pickup.html" class="btn btn-primary btn-pulse">
+                            <span class="btn-icon">📮</span>
+                            Request Pickup
+                        </a>
+                        <a href="tracking.html" class="btn btn-secondary">
+                            <span class="btn-icon">🔍</span>
+                            Track Package
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="hero-visual">
+                    <div class="floating-box box-1">
+                        <div class="box-icon">🚚</div>
+                        <div class="box-label">Express</div>
+                    </div>
+                    <div class="floating-box box-2">
+                        <div class="box-icon">📍</div>
+                        <div class="box-label">Track Live</div>
+                    </div>
+                    <div class="floating-box box-3">
+                        <div class="box-icon">✅</div>
+                        <div class="box-label">Secure</div>
+                    </div>
+                    <div class="delivery-illustration">
+                        <div class="truck">🚛</div>
+                        <div class="route-line"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Track Section -->
+    <section class="quick-track-bar">
+        <div class="container">
+            <form id="quickTrackForm" class="quick-track-form">
+                <div class="track-input-group">
+                    <span class="input-icon">🔍</span>
+                    <input type="text" id="quickTrackInput" placeholder="Enter tracking number (e.g., MNG123456)" required>
+                </div>
+                <button type="submit" class="btn btn-track">Track Now</button>
+            </form>
+            <div class="quick-examples">
+                Try: <span class="example-tracking" onclick="document.getElementById('quickTrackInput').value='MNG123456'">MNG123456</span>,
+                <span class="example-tracking" onclick="document.getElementById('quickTrackInput').value='MNG789012'">MNG789012</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Choose Maneigbbe?</h2>
+                <p>We deliver excellence with every package</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">🚀</div>
+                    </div>
+                    <h3>Lightning Fast</h3>
+                    <p>Same-day and overnight delivery options available for urgent shipments</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">📱</div>
+                    </div>
+                    <h3>Real-Time Tracking</h3>
+                    <p>Track your package live with GPS and get instant status updates</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">💎</div>
+                    </div>
+                    <h3>Premium Care</h3>
+                    <p>Every package is handled with care and delivered safely to your door</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">💰</div>
+                    </div>
+                    <h3>Best Prices</h3>
+                    <p>Competitive rates with no hidden fees. Pay only for what you ship</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">🔒</div>
+                    </div>
+                    <h3>100% Secure</h3>
+                    <p>Insurance coverage and signature confirmation for peace of mind</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">🌍</div>
+                    </div>
+                    <h3>Nationwide</h3>
+                    <p>We deliver to every state, city, and town across the country</p>
+                    <a href="#" class="feature-link">Learn more →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2>Simple, Transparent Pricing</h2>
+                <p>Choose the delivery speed that works for you</p>
+            </div>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-icon">📦</div>
+                    <h3>Standard</h3>
+                    <div class="pricing-price">
+                        <span class="price-amount">$5.99</span>
+                        <span class="price-period">base rate</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ 3-5 business days</li>
+                        <li>✓ Real-time tracking</li>
+                        <li>✓ Up to 50 lbs</li>
+                        <li>✓ Email notifications</li>
+                    </ul>
+                    <a href="request-pickup.html" class="btn btn-pricing">Get Started</a>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="pricing-badge premium">Best Value</div>
+                    <div class="pricing-icon">⚡</div>
+                    <h3>Express</h3>
+                    <div class="pricing-price">
+                        <span class="price-amount">$12.99</span>
+                        <span class="price-period">base rate</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ 1-2 business days</li>
+                        <li>✓ Priority handling</li>
+                        <li>✓ Up to 70 lbs</li>
+                        <li>✓ SMS + Email updates</li>
+                    </ul>
+                    <a href="request-pickup.html" class="btn btn-pricing-featured">Get Started</a>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="pricing-badge">Fastest</div>
+                    <div class="pricing-icon">🚀</div>
+                    <h3>Overnight</h3>
+                    <div class="pricing-price">
+                        <span class="price-amount">$24.99</span>
+                        <span class="price-period">base rate</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Next day delivery</li>
+                        <li>✓ Premium handling</li>
+                        <li>✓ Up to 100 lbs</li>
+                        <li>✓ Live GPS tracking</li>
+                    </ul>
+                    <a href="request-pickup.html" class="btn btn-pricing">Get Started</a>
+                </div>
+            </div>
+            
+            <div class="pricing-note">
+                💡 Additional charges apply for packages over base weight limits ($0.50/lb)
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2>How It Works</h2>
+                <p>Get your package delivered in 3 simple steps</p>
+            </div>
+            
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">📋</div>
+                    <h3>Request Pickup</h3>
+                    <p>Fill out a quick form with sender and recipient details. Get instant price quote.</p>
+                </div>
+                
+                <div class="step-connector">→</div>
+                
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">📦</div>
+                    <h3>We Collect</h3>
+                    <p>Our driver picks up your package within 24 hours. Get your tracking number instantly.</p>
+                </div>
+                
+                <div class="step-connector">→</div>
+                
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">✅</div>
+                    <h3>Delivered!</h3>
+                    <p>Track in real-time and get delivery confirmation with photo proof.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Ship Your Package?</h2>
+                <p>Join thousands of satisfied customers who trust Maneigbbe for their delivery needs</p>
+                <a href="request-pickup.html" class="btn btn-cta">Request Pickup Now 🚀</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>📦 Maneigbbe</h3>
+                    <p>Fast, reliable delivery service you can trust.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="tracking.html">Track Package</a></li>
+                        <li><a href="request-pickup.html">Request Pickup</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Shipping Guide</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📞 1-800-MANEIGBBE</p>
+                    <p>📧 support@maneigbbe.com</p>
+                    <p>⏰ 24/7 Customer Service</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Maneigbbe</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Admin Navigation -->
+    <nav class="navbar admin-navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>📦 Maneigbbe Admin</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="admin.html" class="active">Dashboard</a></li>
+                <li><a href="index.html">View Site</a></li>
+                <li><a href="#" id="logoutBtn">Logout 🚪</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <section class="admin-dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2>📊 Admin Dashboard</h2>
+                <p>Manage all deliveries and track packages</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="admin-stats">
+                <div class="stat-card-admin">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalPackages">0</div>
+                        <div class="stat-label">Total Packages</div>
+                    </div>
+                </div>
+                <div class="stat-card-admin">
+                    <div class="stat-icon">🚚</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="inTransit">0</div>
+                        <div class="stat-label">In Transit</div>
+                    </div>
+                </div>
+                <div class="stat-card-admin">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="delivered">0</div>
+                        <div class="stat-label">Delivered</div>
+                    </div>
+                </div>
+                <div class="stat-card-admin">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="pending">0</div>
+                        <div class="stat-label">Pending Pickup</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packages Table -->
+            <div class="packages-section">
+                <div class="section-title">
+                    <h3>All Packages</h3>
+                    <button class="btn btn-small" id="refreshBtn">🔄 Refresh</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="packages-table">
+                        <thead>
+                            <tr>
+                                <th>Tracking #</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Status</th>
+                                <th>Speed</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="packagesTableBody">
+                            <!-- Packages will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div id="noPackages" class="no-data" style="display: none;">
+                        <div class="no-data-icon">📭</div>
+                        <h3>No Packages Yet</h3>
+                        <p>Packages will appear here when customers request pickups</p>
+                        <a href="request-pickup.html" class="btn btn-primary">Create Test Package</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Package Modal -->
+            <div id="updateModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Update Package Status</h3>
+                        <span class="modal-close">&times;</span>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="package-details">
+                            <h4>Tracking: <span id="modalTrackingNumber"></span></h4>
+                            <p><strong>From:</strong> <span id="modalFrom"></span></p>
+                            <p><strong>To:</strong> <span id="modalTo"></span></p>
+                        </div>
+
+                        <form id="updateStatusForm">
+                            <div class="form-group">
+                                <label for="newStatus">Update Status</label>
+                                <select id="newStatus" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Pending Pickup">Pending Pickup</option>
+                                    <option value="Picked Up">Picked Up</option>
+                                    <option value="In Transit">In Transit</option>
+                                    <option value="Out for Delivery">Out for Delivery</option>
+                                    <option value="Delivered">Delivered</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newLocation">Location</label>
+                                <input type="text" id="newLocation" placeholder="e.g., Chicago, IL" required>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelUpdate">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Update Package</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
