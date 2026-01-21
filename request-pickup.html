@@ -12,10 +12,313 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             background-color: #f8f9fa;
+        }
+
+        /* Pickup Section */
+        .pickup-section {
+            padding: 3rem 1rem;
+            min-height: calc(100vh - 160px);
+        }
+
+        .pickup-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h2 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Form Layout */
+        .pickup-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .form-section h3 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section h3 .icon {
+            font-size: 1.3rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 500px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background: #fff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Full Width Sections */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Packaging Info Box */
+        .packaging-info {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .packaging-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* Rate Cards */
+        .rate-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 500px) {
+            .rate-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .rate-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.25rem;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .rate-card .rate-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .rate-card .rate-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .pricing-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .pricing-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pricing-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Price Estimate */
+        .price-estimate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .price-estimate h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            border: none;
+            padding: 0;
+            color: white;
+        }
+
+        .price-estimate #estimatedPrice {
+            font-size: 2.5rem;
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Success Message */
+        .success-message {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .success-message .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .success-message h3 {
+            color: #27ae60;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message p {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-message .tracking-number {
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: bold;
+            background: #f0f4ff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 1rem 0;
+        }
+
+        .success-message .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .footer p {
+            margin: 0;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -30,168 +333,179 @@
                 </a>
             </div>
             <ul class="nav-links" style="display: flex; list-style: none; gap: 2rem;">
-                <li><a href="index.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Home</a></li>
-                <li><a href="tracking.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Track Package</a></li>
-                <li><a href="request-pickup.html" style="color: white; text-decoration: none; font-weight: bold; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Request Pickup</a></li>
+                <li><a href="index.html" style="color: white; text-decoration: none; font-weight: bold;">Home</a></li>
+                <li><a href="tracking.html" style="color: white; text-decoration: none; font-weight: bold;">Track Package</a></li>
+                <li><a href="request-pickup.html" style="color: white; text-decoration: none; font-weight: bold;">Request Pickup</a></li>
             </ul>
         </div>
     </nav>
 
     <!-- Request Pickup Section -->
-    <section class="pickup-section" style="padding: 3rem 2rem; min-height: 70vh;">
-        <div class="container" style="max-width: 900px; margin: 0 auto;">
-            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem; color: #333;">📮 Request a Pickup</h2>
-            <p class="subtitle" style="text-align: center; color: #666; margin-bottom: 2rem; font-size: 1.1rem;">Fill out the form below and we'll pick up your package</p>
+    <section class="pickup-section">
+        <div class="pickup-container">
+            <div class="page-header">
+                <h2>Request a Pickup</h2>
+                <p>Fill out the form below and we'll pick up your package</p>
+            </div>
 
             <form id="pickupForm" class="pickup-form">
-                <!-- Sender Information -->
-                <div class="form-section">
-                    <h3>Sender Information</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="senderName">Full Name *</label>
-                            <input type="text" id="senderName" required>
+                <div class="form-grid">
+                    <!-- Sender Information -->
+                    <div class="form-section">
+                        <h3><span class="icon">👤</span> Sender Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="senderName">Full Name *</label>
+                                <input type="text" id="senderName" placeholder="John Doe" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="senderPhone">Phone Number *</label>
+                                <input type="tel" id="senderPhone" placeholder="(555) 123-4567" required>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="senderPhone">Phone Number *</label>
-                            <input type="tel" id="senderPhone" required>
+                            <label for="senderAddress">Pickup Address *</label>
+                            <input type="text" id="senderAddress" placeholder="123 Main Street" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="senderCity">City *</label>
+                                <input type="text" id="senderCity" placeholder="New York" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="senderZip">ZIP Code *</label>
+                                <input type="text" id="senderZip" placeholder="10001" required>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="senderAddress">Pickup Address *</label>
-                        <input type="text" id="senderAddress" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="senderCity">City *</label>
-                            <input type="text" id="senderCity" required>
+
+                    <!-- Recipient Information -->
+                    <div class="form-section">
+                        <h3><span class="icon">📍</span> Recipient Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipientName">Full Name *</label>
+                                <input type="text" id="recipientName" placeholder="Jane Smith" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="recipientPhone">Phone Number *</label>
+                                <input type="tel" id="recipientPhone" placeholder="(555) 987-6543" required>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="senderZip">ZIP Code *</label>
-                            <input type="text" id="senderZip" required>
+                            <label for="recipientAddress">Delivery Address *</label>
+                            <input type="text" id="recipientAddress" placeholder="456 Oak Avenue" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipientCity">City *</label>
+                                <input type="text" id="recipientCity" placeholder="Los Angeles" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="recipientZip">ZIP Code *</label>
+                                <input type="text" id="recipientZip" placeholder="90001" required>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recipient Information -->
-                <div class="form-section">
-                    <h3>Recipient Information</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="recipientName">Full Name *</label>
-                            <input type="text" id="recipientName" required>
+                <div class="form-grid">
+                    <!-- Package Information -->
+                    <div class="form-section">
+                        <h3><span class="icon">📦</span> Package Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="packageWeight">Weight (lbs) *</label>
+                                <input type="number" id="packageWeight" min="0.1" step="0.1" placeholder="2.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="deliverySpeed">Delivery Speed *</label>
+                                <select id="deliverySpeed" required>
+                                    <option value="">Select speed...</option>
+                                    <option value="standard">Standard (3-5 days) - $5.99</option>
+                                    <option value="express">Express (1-2 days) - $12.99</option>
+                                    <option value="overnight">Overnight - $24.99</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="recipientPhone">Phone Number *</label>
-                            <input type="tel" id="recipientPhone" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="recipientAddress">Delivery Address *</label>
-                        <input type="text" id="recipientAddress" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="recipientCity">City *</label>
-                            <input type="text" id="recipientCity" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="recipientZip">ZIP Code *</label>
-                            <input type="text" id="recipientZip" required>
+                            <label for="packageDescription">Package Description</label>
+                            <textarea id="packageDescription" rows="3" placeholder="Describe your package contents (optional)"></textarea>
                         </div>
                     </div>
-                </div>
 
-                <!-- Package Information -->
-                <div class="form-section">
-                    <h3>Package Information</h3>
-                    <div class="form-row">
+                    <!-- Packaging Materials -->
+                    <div class="form-section">
+                        <h3><span class="icon">🎁</span> Packaging Materials</h3>
+                        <p style="color: #666; margin-bottom: 1rem; font-size: 0.9rem;">Don't have a box? We've got you covered!</p>
                         <div class="form-group">
-                            <label for="packageWeight">Weight (lbs) *</label>
-                            <input type="number" id="packageWeight" min="0.1" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="deliverySpeed">Delivery Speed *</label>
-                            <select id="deliverySpeed" required>
-                                <option value="">Select...</option>
-                                <option value="standard">Standard (3-5 days) - $5.99</option>
-                                <option value="express">Express (1-2 days) - $12.99</option>
-                                <option value="overnight">Overnight - $24.99</option>
+                            <label for="packagingOption">Select Packaging</label>
+                            <select id="packagingOption">
+                                <option value="none">I have my own packaging - $0.00</option>
+                                <option value="mail">Mail Envelope (13.8" x 10.8") - $15.00</option>
+                                <option value="parcel">Parcel Box (10.8" x 13.8") - $20.00</option>
+                                <option value="box1">Box 1 - Small (10.1" x 5.9") - $30.00</option>
+                                <option value="box2">Box 2 - Medium (17.5" x 12.5") - $30.00</option>
+                                <option value="box3">Box 3 - Medium (13.2" x 12.7") - $30.00</option>
+                                <option value="box4">Box 4 - Large (13.3" x 12.7") - $30.00</option>
+                                <option value="box5">Box 5 - Large (16.4" x 14.2") - $30.00</option>
+                                <option value="box6">Box 6 - X-Large (18.9" x 15.9") - $30.00</option>
+                                <option value="box7">Box 7 - XX-Large (21.3" x 17.5") - $30.00</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="packageDescription">Package Description</label>
-                        <textarea id="packageDescription" rows="3" placeholder="Optional: Describe your package contents"></textarea>
+                        <div class="packaging-info">
+                            <p><strong>Packaging includes:</strong> Box/envelope, bubble wrap, tape, and secure sealing by our team.</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Packaging Materials -->
-                <div class="form-section">
-                    <h3>Need Packaging Materials?</h3>
-                    <p style="color: #666; margin-bottom: 1rem;">Don't have a box? We've got you covered! Select a packaging option below.</p>
-
-                    <div class="form-group">
-                        <label for="packagingOption">Packaging Option</label>
-                        <select id="packagingOption">
-                            <option value="none">I have my own packaging - $0.00</option>
-                            <option value="mail">Mail Envelope (13.8" x 10.8") - $15.00</option>
-                            <option value="parcel">Parcel Box (10.8" x 13.8") - $20.00</option>
-                            <option value="box1">Box 1 - Small (10.1" x 5.9") - $30.00</option>
-                            <option value="box2">Box 2 - Medium (17.5" x 12.5") - $30.00</option>
-                            <option value="box3">Box 3 - Medium (13.2" x 12.7") - $30.00</option>
-                            <option value="box4">Box 4 - Large (13.3" x 12.7") - $30.00</option>
-                            <option value="box5">Box 5 - Large (16.4" x 14.2") - $30.00</option>
-                            <option value="box6">Box 6 - X-Large (18.9" x 15.9") - $30.00</option>
-                            <option value="box7">Box 7 - XX-Large (21.3" x 17.5") - $30.00</option>
-                        </select>
-                    </div>
-
-                    <div class="packaging-info" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                        <p style="margin: 0; font-size: 0.9rem; color: #555;"><strong>Packaging includes:</strong> Box/envelope, bubble wrap, tape, and secure sealing</p>
-                    </div>
-                </div>
-
-                <!-- Shipping Details -->
-                <div class="form-section">
-                    <h3>Shipping Rate Details</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">$0.20</div>
-                            <div style="color: #666; font-size: 0.9rem;">Per Kilometer</div>
+                <!-- Shipping Rates -->
+                <div class="form-section full-width">
+                    <h3><span class="icon">💰</span> Shipping Rates</h3>
+                    <div class="rate-cards">
+                        <div class="rate-card">
+                            <div class="rate-value">$0.20</div>
+                            <div class="rate-label">Per Kilometer</div>
                         </div>
-                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">$0.25</div>
-                            <div style="color: #666; font-size: 0.9rem;">Per Pound (over 5 lbs)</div>
+                        <div class="rate-card">
+                            <div class="rate-value">$0.25</div>
+                            <div class="rate-label">Per Pound (over 5 lbs)</div>
+                        </div>
+                        <div class="rate-card">
+                            <div class="rate-value">15 min</div>
+                            <div class="rate-label">Same Day Delivery</div>
                         </div>
                     </div>
-                    <div style="text-align: center;">
-                        <a href="images/parcel.jpg" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">View Full Pricing Chart</a>
+                    <div class="pricing-link">
+                        <a href="images/parcel.jpg" target="_blank">📋 View Full Pricing Chart</a>
                     </div>
                 </div>
 
                 <!-- Estimated Price -->
-                <div class="price-estimate">
-                    <h3>Estimated Price: <span id="estimatedPrice">$0.00</span></h3>
+                <div class="price-estimate full-width">
+                    <h3>Estimated Total</h3>
+                    <span id="estimatedPrice">$0.00</span>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-large">Submit Pickup Request</button>
+                <button type="submit" class="submit-btn full-width">Submit Pickup Request</button>
             </form>
 
             <!-- Success Message (hidden by default) -->
             <div id="successMessage" class="success-message" style="display: none;">
-                <h3>✓ Pickup Request Submitted!</h3>
-                <p>Your tracking number is: <strong id="generatedTrackingNumber"></strong></p>
+                <div class="success-icon">✓</div>
+                <h3>Pickup Request Submitted!</h3>
+                <p>Your tracking number is:</p>
+                <div class="tracking-number" id="generatedTrackingNumber"></div>
                 <p>We'll pick up your package within 24 hours.</p>
-                <a href="tracking.html" class="btn btn-primary">Track Your Package</a>
+                <a href="tracking.html" class="btn">Track Your Package</a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+            <p>&copy; 2026 Maneigbbe Delivery Service & Technology Inc. All rights reserved.</p>
         </div>
     </footer>
 
