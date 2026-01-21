@@ -10,29 +10,66 @@ const deliveryPrices = {
     overnight: 24.99
 };
 
-// Update price when weight or delivery speed changes
+// Packaging material prices
+const packagingPrices = {
+    none: 0,
+    mail: 15.00,
+    parcel: 20.00,
+    box1: 30.00,
+    box2: 30.00,
+    box3: 30.00,
+    box4: 30.00,
+    box5: 30.00,
+    box6: 30.00,
+    box7: 30.00
+};
+
+// Update price when weight, delivery speed, or packaging changes
 document.getElementById('packageWeight').addEventListener('input', calculatePrice);
 document.getElementById('deliverySpeed').addEventListener('change', calculatePrice);
+document.getElementById('packagingOption').addEventListener('change', calculatePrice);
 
 function calculatePrice() {
     const weight = parseFloat(document.getElementById('packageWeight').value) || 0;
     const speed = document.getElementById('deliverySpeed').value;
+    const packaging = document.getElementById('packagingOption').value;
 
-    if (weight > 0 && speed) {
-        const basePrice = deliveryPrices[speed];
-        // Add $0.50 per pound over 5 lbs
-        const weightCharge = weight > 5 ? (weight - 5) * 0.5 : 0;
-        const totalPrice = basePrice + weightCharge;
+    let totalPrice = 0;
 
-        document.getElementById('estimatedPrice').textContent = `$${totalPrice.toFixed(2)}`;
-    } else {
-        document.getElementById('estimatedPrice').textContent = '$0.00';
+    if (speed) {
+        totalPrice += deliveryPrices[speed];
     }
+
+    // Add $0.25 per pound over 5 lbs (matching the pricing chart)
+    if (weight > 5) {
+        totalPrice += (weight - 5) * 0.25;
+    }
+
+    // Add packaging cost
+    if (packaging && packagingPrices[packaging]) {
+        totalPrice += packagingPrices[packaging];
+    }
+
+    document.getElementById('estimatedPrice').textContent = `$${totalPrice.toFixed(2)}`;
 }
 
 // Handle form submission
 document.getElementById('pickupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+
+    const packagingOption = document.getElementById('packagingOption').value;
+    const packagingNames = {
+        none: 'Own packaging',
+        mail: 'Mail Envelope',
+        parcel: 'Parcel Box',
+        box1: 'Box 1 - Small',
+        box2: 'Box 2 - Medium',
+        box3: 'Box 3 - Medium',
+        box4: 'Box 4 - Large',
+        box5: 'Box 5 - Large',
+        box6: 'Box 6 - X-Large',
+        box7: 'Box 7 - XX-Large'
+    };
 
     // Collect form data
     const formData = {
@@ -53,7 +90,10 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         package: {
             weight: parseFloat(document.getElementById('packageWeight').value),
             speed: document.getElementById('deliverySpeed').value,
-            description: document.getElementById('packageDescription').value
+            description: document.getElementById('packageDescription').value,
+            packaging: packagingOption,
+            packagingName: packagingNames[packagingOption],
+            packagingCost: packagingPrices[packagingOption]
         },
         price: document.getElementById('estimatedPrice').textContent,
         expectedDelivery: calculateExpectedDelivery(document.getElementById('deliverySpeed').value)
