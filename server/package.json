@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend API for Maneigbbe Delivery tracking service",
   "main": "server.js",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
@@ -28,8 +31,4 @@
     "validator": "^13.11.0",
     "xss": "^1.0.15"
   },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "supertest": "^6.3.3"
-  }
 }
