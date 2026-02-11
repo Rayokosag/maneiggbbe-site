@@ -12,15 +12,17 @@
         <div class="container">
             <div class="logo">
                 <a href="index.html">
-                    <img src="images/logo.jpg" alt="Maneigbbe Logo">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
                     <span>Maneigbbe</span>
                 </a>
             </div>
-            <ul class="nav-links">
+            <ul class="nav-links" id="mainNav">
                 <li><a href="index.html" class="active">Home</a></li>
                 <li><a href="tracking.html">Track Package</a></li>
                 <li><a href="request-pickup.html">Request Pickup</a></li>
                 <li><a href="#pricing">Pricing</a></li>
+                <li id="navLoginItem"><a href="customer-login.html">Login</a></li>
+                <li id="navDashboardItem" style="display:none;"><a href="customer-dashboard.html">Dashboard</a></li>
             </ul>
         </div>
     </nav>
@@ -35,7 +37,7 @@
         <div class="container">
             <div class="hero-content">
                 <div class="hero-text">
-                    <h2 class="hero-title animate-fade-in">Deliver Anywhere, Anytime ⚡</h2>
+                    <h2 class="hero-title animate-fade-in">Deliver Anywhere, Anytime</h2>
                     <p class="hero-subtitle animate-fade-in-delay">The fastest and most reliable delivery service. Track in real-time, delivered on time.</p>
                     
                     <div class="hero-stats animate-slide-up">
@@ -55,11 +57,9 @@
                     
                     <div class="hero-buttons">
                         <a href="request-pickup.html" class="btn btn-primary btn-pulse">
-                            <span class="btn-icon">📮</span>
                             Request Pickup
                         </a>
                         <a href="tracking.html" class="btn btn-secondary">
-                            <span class="btn-icon">🔍</span>
                             Track Package
                         </a>
                     </div>
@@ -92,7 +92,7 @@
         <div class="container">
             <form id="quickTrackForm" class="quick-track-form">
                 <div class="track-input-group">
-                    <span class="input-icon">🔍</span>
+                    <span class="input-icon">*</span>
                     <input type="text" id="quickTrackInput" placeholder="Enter tracking number (e.g., MNG123456)" required>
                 </div>
                 <button type="submit" class="btn btn-track">Track Now</button>
@@ -119,52 +119,52 @@
                     </div>
                     <h3>Lightning Fast</h3>
                     <p>Same-day and overnight delivery options available for urgent shipments</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="#pricing" class="feature-link">Learn more →</a>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <div class="feature-icon">📱</div>
                     </div>
                     <h3>Real-Time Tracking</h3>
                     <p>Track your package live with GPS and get instant status updates</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="tracking.html" class="feature-link">Learn more →</a>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <div class="feature-icon">💎</div>
                     </div>
                     <h3>Premium Care</h3>
                     <p>Every package is handled with care and delivered safely to your door</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="request-pickup.html" class="feature-link">Learn more →</a>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <div class="feature-icon">💰</div>
                     </div>
                     <h3>Best Prices</h3>
                     <p>Competitive rates with no hidden fees. Pay only for what you ship</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="#pricing" class="feature-link">Learn more →</a>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <div class="feature-icon">🔒</div>
                     </div>
                     <h3>100% Secure</h3>
                     <p>Insurance coverage and signature confirmation for peace of mind</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="request-pickup.html" class="feature-link">Learn more →</a>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-icon-wrapper">
                         <div class="feature-icon">🌍</div>
                     </div>
                     <h3>Nationwide</h3>
                     <p>We deliver to every state, city, and town across the country</p>
-                    <a href="#" class="feature-link">Learn more →</a>
+                    <a href="request-pickup.html" class="feature-link">Learn more →</a>
                 </div>
             </div>
         </div>
@@ -232,7 +232,7 @@
             </div>
             
             <div class="pricing-note">
-                💡 Additional charges apply for packages over base weight limits ($0.50/lb)
+                * Additional charges apply for packages over base weight limits ($0.50/lb)
             </div>
         </div>
     </section>
@@ -252,18 +252,18 @@
                     <h3>Request Pickup</h3>
                     <p>Fill out a quick form with sender and recipient details. Get instant price quote.</p>
                 </div>
-                
+
                 <div class="step-connector">→</div>
-                
+
                 <div class="step-card">
                     <div class="step-number">2</div>
                     <div class="step-icon">📦</div>
                     <h3>We Collect</h3>
                     <p>Our driver picks up your package within 24 hours. Get your tracking number instantly.</p>
                 </div>
-                
+
                 <div class="step-connector">→</div>
-                
+
                 <div class="step-card">
                     <div class="step-number">3</div>
                     <div class="step-icon">✅</div>
@@ -280,7 +280,7 @@
             <div class="cta-content">
                 <h2>Ready to Ship Your Package?</h2>
                 <p>Join thousands of satisfied customers who trust Maneigbbe for their delivery needs</p>
-                <a href="request-pickup.html" class="btn btn-cta">Request Pickup Now 🚀</a>
+                <a href="request-pickup.html" class="btn btn-cta">Request Pickup Now</a>
             </div>
         </div>
     </section>
@@ -290,7 +290,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>📦 Maneigbbe</h3>
+                    <h3>Maneigbbe</h3>
                     <p>Fast, reliable delivery service you can trust.</p>
                 </div>
                 
@@ -316,9 +316,9 @@
                 
                 <div class="footer-section">
                     <h4>Contact</h4>
-                    <p>📞 1-800-MANEIGBBE</p>
-                    <p>📧 support@maneigbbe.com</p>
-                    <p>⏰ 24/7 Customer Service</p>
+                    <p>Tel: 1-800-MANEIGBBE</p>
+                    <p>Email: support@maneigbbe.com</p>
+                    <p>24/7 Customer Service</p>
                 </div>
             </div>
             
@@ -329,5 +329,11 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script>
+        if (localStorage.getItem('customerToken')) {
+            document.getElementById('navLoginItem').style.display = 'none';
+            document.getElementById('navDashboardItem').style.display = '';
+        }
+    </script>
 </body>
 </html>

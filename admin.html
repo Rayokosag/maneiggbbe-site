@@ -12,14 +12,14 @@
         <div class="container">
             <div class="logo">
                 <a href="admin.html">
-                    <img src="images/logo.jpg" alt="Maneigbbe Logo">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
                     <span>Maneigbbe Admin</span>
                 </a>
             </div>
             <ul class="nav-links">
                 <li><a href="admin.html" class="active">Dashboard</a></li>
                 <li><a href="index.html">View Site</a></li>
-                <li><a href="#" id="logoutBtn">Logout 🚪</a></li>
+                <li><a href="#" id="logoutBtn">Logout</a></li>
             </ul>
         </div>
     </nav>
@@ -28,35 +28,35 @@
     <section class="admin-dashboard">
         <div class="container">
             <div class="dashboard-header">
-                <h2>📊 Admin Dashboard</h2>
+                <h2>Admin Dashboard</h2>
                 <p>Manage all deliveries and track packages</p>
             </div>
 
             <!-- Stats Cards -->
             <div class="admin-stats">
                 <div class="stat-card-admin">
-                    <div class="stat-icon">📦</div>
+                    <div class="stat-icon">[T]</div>
                     <div class="stat-info">
                         <div class="stat-value" id="totalPackages">0</div>
                         <div class="stat-label">Total Packages</div>
                     </div>
                 </div>
                 <div class="stat-card-admin">
-                    <div class="stat-icon">🚚</div>
+                    <div class="stat-icon">[&gt;]</div>
                     <div class="stat-info">
                         <div class="stat-value" id="inTransit">0</div>
                         <div class="stat-label">In Transit</div>
                     </div>
                 </div>
                 <div class="stat-card-admin">
-                    <div class="stat-icon">✅</div>
+                    <div class="stat-icon">[+]</div>
                     <div class="stat-info">
                         <div class="stat-value" id="delivered">0</div>
                         <div class="stat-label">Delivered</div>
                     </div>
                 </div>
                 <div class="stat-card-admin">
-                    <div class="stat-icon">⏳</div>
+                    <div class="stat-icon">[.]</div>
                     <div class="stat-info">
                         <div class="stat-value" id="pending">0</div>
                         <div class="stat-label">Pending Pickup</div>
@@ -68,7 +68,20 @@
             <div class="packages-section">
                 <div class="section-title">
                     <h3>All Packages</h3>
-                    <button class="btn btn-small" id="refreshBtn">🔄 Refresh</button>
+                    <button class="btn btn-small" id="refreshBtn">Refresh</button>
+                </div>
+
+                <!-- Search and Filter Controls -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="searchInput" placeholder="Search tracking #, sender, recipient..." style="flex: 1; min-width: 200px; padding: 0.6rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+                    <select id="statusFilter" style="padding: 0.6rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; background: white;">
+                        <option value="">All Statuses</option>
+                        <option value="Pending Pickup">Pending Pickup</option>
+                        <option value="Picked Up">Picked Up</option>
+                        <option value="In Transit">In Transit</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
                 </div>
 
                 <div class="table-container">
@@ -76,8 +89,8 @@
                         <thead>
                             <tr>
                                 <th>Tracking #</th>
-                                <th>From</th>
-                                <th>To</th>
+                                <th>Sender</th>
+                                <th>Recipient</th>
                                 <th>Status</th>
                                 <th>Speed</th>
                                 <th>Date</th>
@@ -90,12 +103,15 @@
                     </table>
                     
                     <div id="noPackages" class="no-data" style="display: none;">
-                        <div class="no-data-icon">📭</div>
+                        <div class="no-data-icon">[ ]</div>
                         <h3>No Packages Yet</h3>
                         <p>Packages will appear here when customers request pickups</p>
                         <a href="request-pickup.html" class="btn btn-primary">Create Test Package</a>
                     </div>
                 </div>
+
+                <!-- Pagination -->
+                <div id="paginationControls" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;"></div>
             </div>
 
             <!-- Update Package Modal -->

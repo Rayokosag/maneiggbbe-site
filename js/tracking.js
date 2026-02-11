@@ -84,6 +84,24 @@ function displayTrackingResults(data) {
         timelineContainer.appendChild(timelineItem);
     });
 
+    // Display photos if available
+    const photosSection = document.getElementById('packagePhotos');
+    const photoGallery = document.getElementById('photoGallery');
+    if (data.photos && data.photos.length > 0) {
+        photoGallery.innerHTML = '';
+        data.photos.forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'Package photo';
+            img.style.cssText = 'width: 150px; height: 150px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer;';
+            img.onclick = function() { window.open(url, '_blank'); };
+            photoGallery.appendChild(img);
+        });
+        photosSection.style.display = 'block';
+    } else {
+        photosSection.style.display = 'none';
+    }
+
     // Show results
     document.getElementById('trackingResults').style.display = 'block';
 }

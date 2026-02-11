@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login - Maneigbbe</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .login-section {
+            padding: 3rem 1rem;
+            min-height: calc(100vh - 160px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+        }
+        .login-wrapper {
+            display: flex;
+            width: 780px;
+            min-height: 480px;
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        /* --- Art / Character Panel --- */
+        .login-art {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+            position: relative;
+            min-height: 480px;
+            overflow: hidden;
+        }
+        .character {
+            position: absolute;
+            border-radius: 20px;
+        }
+        .c1 { background: #ff7a00; width: 100px; height: 155px; left: 30px; bottom: 40px; }
+        .c2 { background: #6b3df5; width: 100px; height: 155px; left: 120px; bottom: 85px; }
+        .c3 { background: #ffd400; width: 100px; height: 155px; left: 210px; bottom: 55px; }
+        .eye {
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 40px;
+            left: 22px;
+            overflow: hidden;
+        }
+        .eye.right {
+            left: 60px;
+        }
+        .pupil {
+            width: 8px;
+            height: 8px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            transition: transform 0.05s linear;
+        }
+        .art-logo {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+        }
+        .art-logo img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .art-logo span {
+            display: block;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+
+        @keyframes panicShake {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            20%  { transform: translate(-3px, 2px) rotate(-2deg); }
+            40%  { transform: translate(3px, -2px) rotate(2deg); }
+            60%  { transform: translate(-2px, 3px) rotate(-1deg); }
+            80%  { transform: translate(2px, -3px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .character.panic {
+            animation: panicShake 0.4s ease-in-out infinite;
+            filter: saturate(1.4);
+        }
+        .pupil.panic {
+            animation: panicShake 0.2s linear infinite;
+        }
+
+        /* --- Form Panel --- */
+        .login-form-panel {
+            flex: 1;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-form-panel h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin: 0 0 0.3rem;
+        }
+        .login-form-panel > p {
+            color: #666;
+            margin: 0 0 1.5rem;
+        }
+        .login-error {
+            background: #fee;
+            color: #c00;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 1.1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(26, 26, 26, 0.4);
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.2rem 0;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        .divider span {
+            padding: 0 1rem;
+        }
+        .btn-google {
+            width: 100%;
+            padding: 0.9rem;
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #1a1a1a;
+        }
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .login-links {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.9rem;
+        }
+        .login-links a {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+                width: 95%;
+                max-width: 450px;
+            }
+            .login-art {
+                min-height: 200px;
+                height: 200px;
+            }
+            .c1 { width: 70px; height: 110px; left: 20px; bottom: 15px; }
+            .c2 { width: 70px; height: 110px; left: 100px; bottom: 40px; }
+            .c3 { width: 70px; height: 110px; left: 180px; bottom: 20px; }
+            .eye { top: 28px; left: 14px; width: 14px; height: 14px; }
+            .eye.right { left: 42px; }
+            .pupil { width: 6px; height: 6px; top: 4px; left: 4px; }
+            .art-logo img { width: 60px; height: 60px; }
+            .art-logo span { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" style="background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%); padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="logo">
+                <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
+                    <span style="color: white; font-size: 1.5rem; font-weight: bold;">Maneigbbe</span>
+                </a>
+            </div>
+            <ul class="nav-links" style="display: flex; list-style: none; gap: 2rem;">
+                <li><a href="index.html" style="color: white; text-decoration: none; font-weight: bold;">Home</a></li>
+                <li><a href="tracking.html" style="color: white; text-decoration: none; font-weight: bold;">Track Package</a></li>
+                <li><a href="request-pickup.html" style="color: white; text-decoration: none; font-weight: bold;">Request Pickup</a></li>
+                <li><a href="customer-login.html" style="color: white; text-decoration: none; font-weight: bold;">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="login-section">
+        <div class="login-wrapper">
+            <!-- Animated Characters Panel -->
+            <div class="login-art" id="loginArt">
+                <div class="art-logo">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
+                    <span>Maneigbbe</span>
+                </div>
+                <div class="character c1">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                </div>
+                <div class="character c2">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                </div>
+                <div class="character c3">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                </div>
+            </div>
+
+            <!-- Login Form Panel -->
+            <div class="login-form-panel">
+                <h2>Customer Sign In</h2>
+                <p>Access your delivery account</p>
+
+                <div id="errorMessage" class="login-error" style="display: none;"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="john@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                    </div>
+
+                    <button type="submit" class="btn-login">Sign In</button>
+                </form>
+
+                <div class="divider"><span>or</span></div>
+
+                <button class="btn-google" id="googleBtn">
+                    <svg class="google-icon" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+
+                <div class="login-links">
+                    <p><a href="forgot-password.html">Forgot Password?</a></p>
+                    <p style="margin-top: 0.5rem;">Don't have an account? <a href="register.html">Create one</a></p>
+                    <p style="margin-top: 0.5rem;"><a href="login.html">Admin Login</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer" style="background: #333; color: white; text-align: center; padding: 1.5rem;">
+        <div class="container">
+            <p style="margin: 0; opacity: 0.8;">&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- OAuth callback handling ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const nameParam = urlParams.get('name');
+        const errorParam = urlParams.get('error');
+
+        if (token) {
+            localStorage.setItem('customerToken', token);
+            if (nameParam) localStorage.setItem('customerName', nameParam);
+            window.location.href = 'customer-dashboard.html';
+        }
+
+        if (errorParam) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = errorParam === 'oauth_not_configured'
+                ? 'Google Sign-In is not configured on this server.'
+                : 'Authentication failed. Please try again.';
+            errorMsg.style.display = 'block';
+        }
+
+        // --- Google Sign-In ---
+        document.getElementById('googleBtn').addEventListener('click', function() {
+            window.location.href = '/api/customers/auth/google';
+        });
+
+        // --- Character eye tracking ---
+        const pupils = document.querySelectorAll('.pupil');
+        const characters = document.querySelectorAll('.character');
+        const passwordInput = document.getElementById('password');
+        const emailInput = document.getElementById('email');
+
+        function onMouseMove(e) {
+            if (document.activeElement === passwordInput) return;
+            pupils.forEach(function(pupil) {
+                var eye = pupil.parentElement;
+                var rect = eye.getBoundingClientRect();
+                var eyeX = rect.left + rect.width / 2;
+                var eyeY = rect.top + rect.height / 2;
+                var dx = e.clientX - eyeX;
+                var dy = e.clientY - eyeY;
+                var angle = Math.atan2(dy, dx);
+                var maxMove = 4;
+                var x = Math.cos(angle) * maxMove;
+                var y = Math.sin(angle) * maxMove;
+                pupil.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+            });
+        }
+        document.addEventListener('mousemove', onMouseMove);
+
+        // Eyes look down on password focus (shy / looking away)
+        passwordInput.addEventListener('focus', function() {
+            pupils.forEach(function(p) { p.style.transform = 'translate(0, 8px)'; });
+        });
+        passwordInput.addEventListener('blur', function() {
+            pupils.forEach(function(p) { p.style.transform = 'translate(0, 0)'; });
+        });
+
+        // Panic shake on empty submit
+        function triggerPanic() {
+            characters.forEach(function(c) { c.classList.add('panic'); });
+            pupils.forEach(function(p) { p.classList.add('panic'); });
+            setTimeout(function() {
+                characters.forEach(function(c) { c.classList.remove('panic'); });
+                pupils.forEach(function(p) { p.classList.remove('panic'); });
+            }, 1200);
+        }
+
+        // --- Login form submission ---
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var errorMsg = document.getElementById('errorMessage');
+            errorMsg.style.display = 'none';
+
+            if (!emailInput.value.trim() || !passwordInput.value.trim()) {
+                triggerPanic();
+                errorMsg.textContent = 'Please fill in all fields.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                var response = await fetch('/api/customers/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
+
+                var data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('customerToken', data.token);
+                    localStorage.setItem('customerName', data.customer.name);
+                    window.location.href = 'customer-dashboard.html';
+                } else {
+                    triggerPanic();
+                    errorMsg.textContent = data.error || 'Login failed';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                triggerPanic();
+                errorMsg.textContent = 'Connection error. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

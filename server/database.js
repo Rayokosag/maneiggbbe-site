@@ -3,12 +3,20 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'delivery.db');
+const isTest = process.env.NODE_ENV === 'test';
+const DB_PATH = isTest
+  ? path.join(__dirname, 'test-delivery.db')
+  : path.join(__dirname, 'delivery.db');
 
 let db = null;
 
 async function initDatabase() {
   const SQL = await initSqlJs();
+
+  // In test mode, always start fresh
+  if (isTest && fs.existsSync(DB_PATH)) {
+    fs.unlinkSync(DB_PATH);
+  }
 
   // Load existing database or create new one
   if (fs.existsSync(DB_PATH)) {
@@ -32,16 +40,19 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS packages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tracking_number TEXT UNIQUE NOT NULL,
+      customer_id INTEGER,
       sender_name TEXT NOT NULL,
       sender_phone TEXT NOT NULL,
       sender_address TEXT NOT NULL,
       sender_city TEXT NOT NULL,
       sender_zip TEXT NOT NULL,
+      sender_email TEXT,
       recipient_name TEXT NOT NULL,
       recipient_phone TEXT NOT NULL,
       recipient_address TEXT NOT NULL,
       recipient_city TEXT NOT NULL,
       recipient_zip TEXT NOT NULL,
+      recipient_email TEXT,
       weight REAL NOT NULL,
       speed TEXT NOT NULL,
       description TEXT,
@@ -49,6 +60,29 @@ async function initDatabase() {
       status TEXT DEFAULT 'Pending Pickup',
       request_date TEXT NOT NULL,
       expected_delivery TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
+      phone TEXT,
+      google_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -67,7 +101,22 @@ async function initDatabase() {
 
   // Create indexes
   db.run('CREATE INDEX IF NOT EXISTS idx_packages_tracking ON packages(tracking_number)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_packages_customer ON packages(customer_id)');
   db.run('CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON timeline_events(tracking_number)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)');
+
+  // Migration: add customer_id column if missing (existing databases)
+  try {
+    const cols = db.exec("PRAGMA table_info(packages)");
+    if (cols.length > 0) {
+      const colNames = cols[0].values.map(r => r[1]);
+      if (!colNames.includes('customer_id')) {
+        db.run('ALTER TABLE packages ADD COLUMN customer_id INTEGER');
+      }
+    }
+  } catch (e) {
+    // column already exists or fresh db - ignore
+  }
 
   // Seed default admin if not exists
   const adminResult = db.exec("SELECT id FROM admins WHERE username = 'admin'");

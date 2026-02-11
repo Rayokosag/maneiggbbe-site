@@ -1,119 +1,84 @@
-# Maneigbbe Delivery Service
+# Maneigbbe Delivery
 
-A delivery tracking website similar to UPS, built with vanilla HTML, CSS, and JavaScript.
+A package delivery tracking website (like UPS) for **Maneigbbe Delivery Service & Technology Inc**.
+
+## Quick Start
+
+```bash
+cd server
+npm install
+npm start
+```
+Open http://localhost:3000 in your browser.
+
+## Features
+
+- Track packages with tracking number
+- Request pickup with pricing calculator
+- Admin dashboard to manage packages
+- Customer registration & login (Email + Google)
+- Email & SMS notifications
+- Photo upload for packages
 
 ## Project Structure
 
 ```
 maneigbbe-delivery/
-│
-├── index.html              # Homepage
-├── tracking.html           # Package tracking page
-├── request-pickup.html     # Pickup request form
-│
-├── css/
-│   └── styles.css         # All styles for the website
-│
-└── js/
-    ├── main.js            # Homepage JavaScript
-    ├── tracking.js        # Tracking page logic
-    └── pickup.js          # Pickup form logic
+├── index.html                # Homepage
+├── tracking.html             # Track packages
+├── request-pickup.html       # Request a pickup
+├── login.html                # Admin login
+├── admin.html                # Admin dashboard
+├── customer-login.html       # Customer login
+├── register.html             # Customer signup
+├── css/styles.css            # Styles
+├── js/                       # Frontend scripts
+├── images/                   # Logo & images
+└── server/                   # Backend (Node.js)
 ```
 
-## Features (Phase 1 - Frontend Only)
+## Default Login
 
-### ✅ Completed
-- **Homepage** with hero section and features
-- **Package Tracking** with mock data (3 test tracking numbers)
-- **Request Pickup Form** with price calculator
-- **Admin Login System** with authentication
-- **Admin Dashboard** to manage packages
-- Responsive design (works on mobile)
-- Local storage for pickup requests
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | admin | admin123 |
 
-### 🧪 Test Tracking Numbers
-You can test the tracking feature with these numbers:
-- `MNG123456` - Package in transit
-- `MNG789012` - Delivered package
-- `MNG345678` - Pending pickup
+## Tech Stack
 
-### 🔐 Admin Access
-- **Login URL**: Open `login.html`
-- **Username**: `admin`
-- **Password**: `admin123`
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** Node.js, Express
+- **Database:** SQLite
 
-## How to Use
+## Pricing
 
-1. Open `index.html` in your browser (just double-click it)
-2. Navigate between pages using the navigation menu
-3. Try tracking with the test numbers above
-4. Fill out the pickup form to generate a new tracking number
-5. **Access admin panel**: Open `login.html` and use credentials above
+| Item | Price |
+|------|-------|
+| Standard (3-5 days) | $5.99 |
+| Express (1-2 days) | $12.99 |
+| Overnight | $24.99 |
+| Distance | $0.20/km |
+| Weight | $0.25/lb |
 
-### Admin Panel Features
-- **Dashboard Stats**: View total packages, in transit, delivered, pending
-- **Package Management**: See all packages in a table
-- **Update Status**: Click the ✏️ icon to update package status and location
-- **View Details**: Click the 👁️ icon to open tracking page
-- **Delete Packages**: Click the 🗑️ icon to remove packages
-- **Real-time Updates**: Changes appear instantly on tracking page
+## Package Statuses
 
-## How It Works Right Now
+1. Pending Pickup
+2. Picked Up
+3. In Transit
+4. Out for Delivery
+5. Delivered
 
-### Tracking Page (tracking.js)
-- Uses **mock data** stored in a JavaScript object
-- Displays package status, timeline, and delivery info
-- No backend yet - all data is hardcoded
+## Environment Setup
 
-### Pickup Form (pickup.js)
-- Calculates price based on weight and delivery speed
-- Generates a random tracking number
-- Saves data to **localStorage** (browser storage)
-- Shows success message with tracking number
+Copy `.env.example` to `.env` in the server folder and update:
 
-### Current Limitations
-- Data is not persistent across browsers (localStorage only)
-- Mock tracking data is hardcoded
-- No real backend or database yet
-- No admin panel yet
-
-## Next Steps (Phase 2)
-
-We'll add:
-1. **Node.js/Express backend** server
-2. **SQLite database** to store real package data
-3. Connect frontend to backend with **API calls**
-4. Make tracking numbers actually work with database data
-
-## Learning Notes
-
-### Key Concepts Used:
-- **DOM Manipulation**: Getting elements with `getElementById`, updating content
-- **Event Listeners**: Handling form submissions and button clicks
-- **LocalStorage**: Saving data in the browser
-- **URL Parameters**: Passing tracking numbers via URL (`?track=MNG123456`)
-- **JSON**: Storing and parsing data
-- **CSS Grid & Flexbox**: Layout and responsive design
-
-### JavaScript Patterns You'll See:
-```javascript
-// Event listener pattern
-document.getElementById('form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Stop default form behavior
-    // Your code here
-});
-
-// Getting form values
-const value = document.getElementById('input').value;
-
-// Updating HTML content
-document.getElementById('element').textContent = 'New text';
-
-// Showing/hiding elements
-document.getElementById('element').style.display = 'block'; // Show
-document.getElementById('element').style.display = 'none';  // Hide
+```
+JWT_SECRET=your-secret-key
+TWILIO_ACCOUNT_SID=your-twilio-sid
+TWILIO_AUTH_TOKEN=your-twilio-token
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-secret
 ```
 
-## Questions?
+## License
 
-Feel free to explore the code! Each file has comments explaining what it does.
+MIT

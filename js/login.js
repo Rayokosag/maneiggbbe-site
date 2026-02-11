@@ -24,6 +24,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         if (response.ok && data.success) {
             // Store session info
             localStorage.setItem('adminLoggedIn', 'true');
+            localStorage.setItem('adminToken', data.token);
             localStorage.setItem('adminUsername', data.username);
             localStorage.setItem('loginTime', data.loginTime);
 

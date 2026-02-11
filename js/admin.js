@@ -3,14 +3,29 @@
 // API base URL
 const API_URL = '/api';
 
+// Get admin token for API calls
+function getAuthHeaders() {
+    const token = localStorage.getItem('adminToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
+}
+
 // Check if user is logged in
 function checkAuth() {
-    if (localStorage.getItem('adminLoggedIn') !== 'true') {
+    if (localStorage.getItem('adminLoggedIn') !== 'true' || !localStorage.getItem('adminToken')) {
         window.location.href = 'login.html';
         return false;
     }
     return true;
 }
+
+// State
+let currentPage = 1;
+let currentStatus = '';
+let currentSearch = '';
+let totalPages = 1;
 
 // Initialize dashboard
 if (checkAuth()) {
@@ -27,6 +42,7 @@ document.getElementById('logoutBtn').addEventListener('click', async function(e)
             console.error('Logout error:', error);
         }
         localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminToken');
         localStorage.removeItem('adminUsername');
         localStorage.removeItem('loginTime');
         window.location.href = 'login.html';
@@ -36,17 +52,36 @@ document.getElementById('logoutBtn').addEventListener('click', async function(e)
 // Load dashboard data
 async function loadDashboard() {
     try {
-        // Fetch packages and stats in parallel
+        const headers = getAuthHeaders();
+        const statusParam = currentStatus ? `&status=${encodeURIComponent(currentStatus)}` : '';
+
         const [packagesRes, statsRes] = await Promise.all([
-            fetch(`${API_URL}/packages`),
-            fetch(`${API_URL}/packages/stats`)
+            fetch(`${API_URL}/packages?page=${currentPage}&limit=20${statusParam}`, { headers }),
+            fetch(`${API_URL}/packages/stats`, { headers })
         ]);
 
-        const packages = await packagesRes.json();
+        if (packagesRes.status === 401 || packagesRes.status === 403) {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const packagesData = await packagesRes.json();
         const stats = await statsRes.json();
 
         updateStats(stats);
+
+        // Handle paginated response format
+        const packages = packagesData.packages || packagesData;
+        const pagination = packagesData.pagination;
+        if (pagination) {
+            totalPages = pagination.totalPages;
+            currentPage = pagination.page;
+        }
+
         renderPackagesTable(packages);
+        renderPagination();
     } catch (error) {
         console.error('Error loading dashboard:', error);
         alert('Failed to load dashboard data');
@@ -66,7 +101,20 @@ function renderPackagesTable(packages) {
     const tbody = document.getElementById('packagesTableBody');
     const noPackages = document.getElementById('noPackages');
 
-    if (packages.length === 0) {
+    // Apply client-side search filter
+    let filtered = packages;
+    if (currentSearch) {
+        const q = currentSearch.toLowerCase();
+        filtered = packages.filter(pkg =>
+            pkg.trackingNumber.toLowerCase().includes(q) ||
+            pkg.sender.name.toLowerCase().includes(q) ||
+            pkg.recipient.name.toLowerCase().includes(q) ||
+            (pkg.sender.city && pkg.sender.city.toLowerCase().includes(q)) ||
+            (pkg.recipient.city && pkg.recipient.city.toLowerCase().includes(q))
+        );
+    }
+
+    if (filtered.length === 0) {
         tbody.innerHTML = '';
         noPackages.style.display = 'block';
         return;
@@ -75,9 +123,9 @@ function renderPackagesTable(packages) {
     noPackages.style.display = 'none';
 
     // Sort by date (newest first)
-    packages.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+    filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
 
-    tbody.innerHTML = packages.map(pkg => {
+    tbody.innerHTML = filtered.map(pkg => {
         const statusClass = getStatusClass(pkg.status);
         const date = new Date(pkg.requestDate).toLocaleDateString('en-US', {
             month: 'short',
@@ -88,8 +136,8 @@ function renderPackagesTable(packages) {
         return `
             <tr>
                 <td><strong>${pkg.trackingNumber}</strong></td>
-                <td>${pkg.sender.city}, ${pkg.sender.zip}</td>
-                <td>${pkg.recipient.city}, ${pkg.recipient.zip}</td>
+                <td>${pkg.sender.name}</td>
+                <td>${pkg.recipient.name}</td>
                 <td><span class="status-badge ${statusClass}">${pkg.status}</span></td>
                 <td>${capitalize(pkg.package.speed)}</td>
                 <td>${date}</td>
@@ -107,6 +155,31 @@ function renderPackagesTable(packages) {
             </tr>
         `;
     }).join('');
+}
+
+// Render pagination controls
+function renderPagination() {
+    const container = document.getElementById('paginationControls');
+    if (!container) return;
+
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    html += `<button class="btn btn-small" onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="btn btn-small ${i === currentPage ? 'btn-primary' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `<button class="btn btn-small" onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Next</button>`;
+    container.innerHTML = html;
+}
+
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    loadDashboard();
 }
 
 // Get status class for styling
@@ -129,17 +202,33 @@ function capitalize(str) {
 // Refresh button
 document.getElementById('refreshBtn').addEventListener('click', function() {
     loadDashboard();
-
-    // Show refresh animation
     this.style.transform = 'rotate(360deg)';
     setTimeout(() => {
         this.style.transform = 'rotate(0deg)';
     }, 500);
 });
 
+// Search input handler
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        currentSearch = this.value.trim();
+        loadDashboard();
+    });
+}
+
+// Status filter handler
+const statusFilter = document.getElementById('statusFilter');
+if (statusFilter) {
+    statusFilter.addEventListener('change', function() {
+        currentStatus = this.value;
+        currentPage = 1;
+        loadDashboard();
+    });
+}
+
 // Update Modal Functions
 let currentTrackingNumber = null;
-let packagesCache = [];
 
 async function openUpdateModal(trackingNumber) {
     currentTrackingNumber = trackingNumber;
@@ -150,13 +239,11 @@ async function openUpdateModal(trackingNumber) {
 
         if (!pkg) return;
 
-        // Populate modal with package info
         document.getElementById('modalTrackingNumber').textContent = trackingNumber;
         document.getElementById('modalFrom').textContent = `${pkg.sender.city}, ${pkg.sender.zip}`;
         document.getElementById('modalTo').textContent = `${pkg.recipient.city}, ${pkg.recipient.zip}`;
         document.getElementById('newStatus').value = pkg.status;
 
-        // Show modal
         document.getElementById('updateModal').style.display = 'flex';
     } catch (error) {
         console.error('Error fetching package:', error);
@@ -192,9 +279,7 @@ document.getElementById('updateStatusForm').addEventListener('submit', async fun
     try {
         const response = await fetch(`${API_URL}/packages/${currentTrackingNumber}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 status: newStatus,
                 location: newLocation || 'Distribution Center'
@@ -205,11 +290,8 @@ document.getElementById('updateStatusForm').addEventListener('submit', async fun
             throw new Error('Failed to update package');
         }
 
-        // Close modal and reload
         closeUpdateModal();
         loadDashboard();
-
-        // Show success message
         alert(`Package ${currentTrackingNumber} updated to: ${newStatus}`);
     } catch (error) {
         console.error('Error updating package:', error);
@@ -225,7 +307,8 @@ async function deletePackage(trackingNumber) {
     if (confirm(`Are you sure you want to delete package ${trackingNumber}?`)) {
         try {
             const response = await fetch(`${API_URL}/packages/${trackingNumber}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: getAuthHeaders()
             });
 
             if (!response.ok) {

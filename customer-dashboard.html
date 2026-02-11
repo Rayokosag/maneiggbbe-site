@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Maneigbbe</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #121212;
+        }
+        .dashboard-section {
+            padding: 2rem 1rem;
+            min-height: calc(100vh - 130px);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+        .dashboard-header h2 {
+            font-size: 1.8rem;
+            color: #fff;
+        }
+        .dashboard-header p {
+            color: #999;
+        }
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card-dash {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .stat-card-dash .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .stat-card-dash .stat-label {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        /* Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #333;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active {
+            color: #fff;
+            border-bottom-color: #fff;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        .packages-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .packages-table th,
+        .packages-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        .packages-table th {
+            background: #2a2a2a;
+            color: #999;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .packages-table td { color: #e0e0e0; }
+        .packages-table tr:hover { background: #252525; }
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-pending { background: #3a2f00; color: #f5c518; }
+        .status-picked { background: #1a2f3a; color: #4fc3f7; }
+        .status-transit { background: #1a2a3a; color: #42a5f5; }
+        .status-delivery { background: #2a1a3a; color: #ab47bc; }
+        .status-delivered { background: #1a3a1a; color: #66bb6a; }
+        .track-link {
+            color: #90caf9;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .track-link:hover { text-decoration: underline; }
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        /* Profile Form */
+        .profile-form {
+            max-width: 500px;
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #333;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #90caf9;
+            box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.15);
+        }
+        .btn-save {
+            padding: 0.75rem 2rem;
+            background: #fff;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(255,255,255,0.2);
+        }
+        .form-message {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .form-message-success { background: #1a3a1a; color: #66bb6a; }
+        .form-message-error { background: #3a1a1a; color: #ef5350; }
+        /* Logout */
+        .logout-btn {
+            background: none;
+            border: 1px solid #666;
+            color: #999;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .logout-btn:hover { color: #fff; border-color: #fff; }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="logo">
+                <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
+                    <span style="color: white; font-size: 1.5rem; font-weight: bold;">Maneigbbe</span>
+                </a>
+            </div>
+            <ul class="nav-links" style="display: flex; list-style: none; gap: 2rem; align-items: center;">
+                <li><a href="index.html" style="color: #ccc; text-decoration: none; font-weight: bold;">Home</a></li>
+                <li><a href="tracking.html" style="color: #ccc; text-decoration: none; font-weight: bold;">Track</a></li>
+                <li><a href="request-pickup.html" style="color: #ccc; text-decoration: none; font-weight: bold;">Ship</a></li>
+                <li><a href="customer-dashboard.html" style="color: #fff; text-decoration: none; font-weight: bold;">Dashboard</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="dashboard-section">
+        <div class="header-row dashboard-header">
+            <div>
+                <h2>Welcome, <span id="customerName">Customer</span></h2>
+                <p>Manage your shipments and account</p>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card-dash">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total Packages</div>
+            </div>
+            <div class="stat-card-dash">
+                <div class="stat-value" id="statTransit">0</div>
+                <div class="stat-label">In Transit</div>
+            </div>
+            <div class="stat-card-dash">
+                <div class="stat-value" id="statDelivered">0</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+            <div class="stat-card-dash">
+                <div class="stat-value" id="statPending">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="packages">My Packages</button>
+            <button class="tab-btn" data-tab="profile">Profile</button>
+            <button class="tab-btn" data-tab="password">Change Password</button>
+        </div>
+
+        <!-- Packages Tab -->
+        <div id="tab-packages" class="tab-content active">
+            <div class="table-container">
+                <table class="packages-table">
+                    <thead>
+                        <tr>
+                            <th>Tracking #</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="packagesBody">
+                    </tbody>
+                </table>
+                <div id="noPackages" class="no-data" style="display: none;">
+                    <p>No packages yet.</p>
+                    <p style="margin-top: 0.5rem;"><a href="request-pickup.html" class="track-link">Request a Pickup</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="tab-profile" class="tab-content">
+            <div class="profile-form">
+                <div id="profileMsg" class="form-message" style="display: none;"></div>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="profileName">Full Name</label>
+                        <input type="text" id="profileName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email</label>
+                        <input type="email" id="profileEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profilePhone">Phone</label>
+                        <input type="tel" id="profilePhone">
+                    </div>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password Tab -->
+        <div id="tab-password" class="tab-content">
+            <div class="profile-form">
+                <div id="passwordMsg" class="form-message" style="display: none;"></div>
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" minlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" required>
+                    </div>
+                    <button type="submit" class="btn-save">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #0a0a0a; text-align: center; padding: 1.5rem; color: #666; font-size: 0.85rem;">
+        <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+    </footer>
+
+    <script src="js/customer-dashboard.js"></script>
+</body>
+</html>

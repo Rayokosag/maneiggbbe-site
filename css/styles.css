@@ -8,17 +8,17 @@
 }
 
 :root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --accent-color: #f093fb;
-    --text-dark: #2d3748;
-    --text-light: #718096;
-    --bg-light: #f7fafc;
+    --primary-color: #1a1a1a;
+    --secondary-color: #333333;
+    --accent-color: #666666;
+    --text-dark: #1a1a1a;
+    --text-light: #666666;
+    --bg-light: #f5f5f5;
     --white: #ffffff;
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
-    --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.12);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.18);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.25);
 }
 
 body {
@@ -102,10 +102,8 @@ body {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     padding: 1rem 0;
     box-shadow: var(--shadow-md);
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 1000;
-    backdrop-filter: blur(10px);
 }
 
 .navbar .container {
@@ -129,8 +127,8 @@ body {
 }
 
 .logo img {
-    height: 80px;
-    width: 80px;
+    height: 120px;
+    width: 120px;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -410,7 +408,7 @@ body {
 .track-input-group input {
     width: 100%;
     padding: 1.2rem 1.5rem 1.2rem 3.5rem;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #e0e0e0;
     border-radius: 50px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -419,7 +417,7 @@ body {
 .track-input-group input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1);
 }
 
 .btn-track {
@@ -554,7 +552,7 @@ body {
 
 .pricing-card {
     background: var(--white);
-    border: 2px solid #e2e8f0;
+    border: 2px solid #e0e0e0;
     border-radius: 20px;
     padding: 3rem 2rem;
     text-align: center;
@@ -569,7 +567,7 @@ body {
 
 .pricing-card.featured {
     border-color: var(--primary-color);
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.03), rgba(51, 51, 51, 0.05));
     transform: scale(1.05);
 }
 
@@ -627,7 +625,7 @@ body {
 .pricing-features li {
     padding: 0.8rem 0;
     color: var(--text-dark);
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .pricing-features li:last-child {
@@ -829,7 +827,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
     padding: 2rem;
 }
 
@@ -889,7 +887,7 @@ body {
 .input-with-icon input {
     width: 100%;
     padding: 1rem 1rem 1rem 3rem;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -898,7 +896,7 @@ body {
 .input-with-icon input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1);
 }
 
 .login-error {
@@ -932,7 +930,7 @@ body {
 .login-demo-info {
     margin-top: 2rem;
     padding: 1.5rem;
-    background: #f7fafc;
+    background: #f5f5f5;
     border-radius: 10px;
     border-left: 4px solid var(--primary-color);
 }
@@ -956,11 +954,11 @@ body {
 
 /* ===== ADMIN DASHBOARD ===== */
 .admin-navbar {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
 }
 
 .admin-dashboard {
-    background: #f5f7fa;
+    background: #f5f5f5;
     min-height: calc(100vh - 150px);
     padding: 2rem 0;
 }
@@ -1075,7 +1073,7 @@ body {
 }
 
 .packages-table thead {
-    background: #f8f9fa;
+    background: #f5f5f5;
 }
 
 .packages-table th {
@@ -1083,17 +1081,17 @@ body {
     text-align: left;
     font-weight: 600;
     color: var(--text-dark);
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .packages-table td {
     padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e0e0e0;
     color: var(--text-dark);
 }
 
 .packages-table tbody tr:hover {
-    background: #f8f9fa;
+    background: #f5f5f5;
 }
 
 .status-badge {
@@ -1105,28 +1103,28 @@ body {
 }
 
 .status-pending {
-    background: #fff3cd;
-    color: #856404;
+    background: #e0e0e0;
+    color: #333333;
 }
 
 .status-picked {
-    background: #d1ecf1;
-    color: #0c5460;
+    background: #c0c0c0;
+    color: #1a1a1a;
 }
 
 .status-transit {
-    background: #cce5ff;
-    color: #004085;
+    background: #999999;
+    color: #ffffff;
 }
 
 .status-delivery {
-    background: #d4edda;
-    color: #155724;
+    background: #666666;
+    color: #ffffff;
 }
 
 .status-delivered {
-    background: #d4edda;
-    color: #155724;
+    background: #1a1a1a;
+    color: #ffffff;
 }
 
 .btn-icon {
@@ -1198,7 +1196,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 2rem 2rem 1rem;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .modal-header h3 {
@@ -1222,7 +1220,7 @@ body {
 }
 
 .package-details {
-    background: #f8f9fa;
+    background: #f5f5f5;
     padding: 1.5rem;
     border-radius: 10px;
     margin-bottom: 2rem;

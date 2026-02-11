@@ -78,14 +78,16 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
             phone: document.getElementById('senderPhone').value,
             address: document.getElementById('senderAddress').value,
             city: document.getElementById('senderCity').value,
-            zip: document.getElementById('senderZip').value
+            zip: document.getElementById('senderZip').value,
+            email: document.getElementById('senderEmail') ? document.getElementById('senderEmail').value : undefined
         },
         recipient: {
             name: document.getElementById('recipientName').value,
             phone: document.getElementById('recipientPhone').value,
             address: document.getElementById('recipientAddress').value,
             city: document.getElementById('recipientCity').value,
-            zip: document.getElementById('recipientZip').value
+            zip: document.getElementById('recipientZip').value,
+            email: document.getElementById('recipientEmail') ? document.getElementById('recipientEmail').value : undefined
         },
         package: {
             weight: parseFloat(document.getElementById('packageWeight').value),
@@ -99,12 +101,17 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         expectedDelivery: calculateExpectedDelivery(document.getElementById('deliverySpeed').value)
     };
 
+    // Build headers - include customer auth if logged in
+    const headers = { 'Content-Type': 'application/json' };
+    const customerToken = localStorage.getItem('customerToken');
+    if (customerToken) {
+        headers['Authorization'] = `Bearer ${customerToken}`;
+    }
+
     try {
         const response = await fetch(`${API_URL}/packages`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers,
             body: JSON.stringify(formData)
         });
 
@@ -113,6 +120,25 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         }
 
         const data = await response.json();
+
+        // Upload photos if any were selected
+        const photoInput = document.getElementById('packagePhotos');
+        if (photoInput && photoInput.files && photoInput.files.length > 0) {
+            const photoFormData = new FormData();
+            const files = Array.from(photoInput.files).slice(0, 5);
+            files.forEach(function(file) {
+                photoFormData.append('photos', file);
+            });
+
+            try {
+                await fetch(`${API_URL}/packages/${data.trackingNumber}/photos`, {
+                    method: 'POST',
+                    body: photoFormData
+                });
+            } catch (photoErr) {
+                console.error('Photo upload failed:', photoErr);
+            }
+        }
 
         // Hide form and show success message
         document.getElementById('pickupForm').style.display = 'none';

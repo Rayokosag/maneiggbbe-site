@@ -1,7 +1,21 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { getDb } = require('../database');
+const { signToken } = require('../jwt');
+
+const isTest = process.env.NODE_ENV === 'test';
+
+// Rate limiting for login (disabled in test)
+if (!isTest) {
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Too many login attempts, please try again later.' }
+  });
+  router.use('/login', loginLimiter);
+}
 
 // POST /api/auth/login
 router.post('/login', (req, res) => {
@@ -30,9 +44,12 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  // Return success
+  // Generate JWT token
+  const token = signToken({ id: admin.id, username: admin.username, role: 'admin' });
+
   res.json({
     success: true,
+    token,
     username: admin.username,
     loginTime: new Date().toISOString()
   });

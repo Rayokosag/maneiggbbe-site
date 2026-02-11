@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, saveDatabase } = require('../database');
+const { sendPickupConfirmation, sendStatusUpdate } = require('../email');
+const { upload, getPhotosForPackage } = require('../upload');
+const { authenticateToken, verifyToken } = require('../jwt');
+const { requireAdmin } = require('../roles');
 
 // Helper to convert SQL result to array of objects
 function resultToObjects(result) {
@@ -19,7 +23,7 @@ function resultToObject(result) {
   return objects.length > 0 ? objects[0] : null;
 }
 
-// Helper to format package with timeline
+// Helper to format package with timeline and photos
 function formatPackage(pkg) {
   const db = getDb();
   const timelineResult = db.exec(
@@ -27,6 +31,7 @@ function formatPackage(pkg) {
     [pkg.tracking_number]
   );
   const timeline = resultToObjects(timelineResult);
+  const photos = getPhotosForPackage(pkg.tracking_number);
 
   return {
     trackingNumber: pkg.tracking_number,
@@ -35,14 +40,16 @@ function formatPackage(pkg) {
       phone: pkg.sender_phone,
       address: pkg.sender_address,
       city: pkg.sender_city,
-      zip: pkg.sender_zip
+      zip: pkg.sender_zip,
+      email: pkg.sender_email || null
     },
     recipient: {
       name: pkg.recipient_name,
       phone: pkg.recipient_phone,
       address: pkg.recipient_address,
       city: pkg.recipient_city,
-      zip: pkg.recipient_zip
+      zip: pkg.recipient_zip,
+      email: pkg.recipient_email || null
     },
     package: {
       weight: pkg.weight,
@@ -55,6 +62,7 @@ function formatPackage(pkg) {
     expectedDelivery: pkg.expected_delivery,
     from: `${pkg.sender_city}, ${pkg.sender_zip.substring(0, 2)} ${pkg.sender_zip}`,
     to: `${pkg.recipient_city}, ${pkg.recipient_zip.substring(0, 2)} ${pkg.recipient_zip}`,
+    photos,
     timeline: timeline.map(t => ({
       date: t.date,
       status: t.status,
@@ -64,16 +72,50 @@ function formatPackage(pkg) {
   };
 }
 
-// GET /api/packages - List all packages
-router.get('/', (req, res) => {
+// GET /api/packages - List all packages with pagination, filtering, sorting (admin only)
+router.get('/', authenticateToken, requireAdmin, (req, res) => {
   const db = getDb();
-  const result = db.exec('SELECT * FROM packages ORDER BY created_at DESC');
+  const { page = 1, limit = 20, status, sortBy = 'created_at', sortOrder = 'DESC' } = req.query;
+
+  const pageNum = Math.max(1, parseInt(page));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+  const offset = (pageNum - 1) * limitNum;
+
+  // Validate sort parameters
+  const allowedSortFields = ['created_at', 'tracking_number', 'status', 'sender_name', 'recipient_name', 'weight'];
+  const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+  const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+  let whereClause = '';
+  const params = [];
+
+  if (status) {
+    whereClause = 'WHERE status = ?';
+    params.push(status);
+  }
+
+  // Get total count
+  const countResult = db.exec(`SELECT COUNT(*) as count FROM packages ${whereClause}`, params);
+  const total = countResult[0]?.values[0][0] || 0;
+
+  // Get paginated results
+  const query = `SELECT * FROM packages ${whereClause} ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`;
+  const result = db.exec(query, [...params, limitNum, offset]);
   const packages = resultToObjects(result);
-  res.json(packages.map(formatPackage));
+
+  res.json({
+    packages: packages.map(formatPackage),
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  });
 });
 
-// GET /api/packages/stats - Get dashboard statistics
-router.get('/stats', (req, res) => {
+// GET /api/packages/stats - Get dashboard statistics (admin only)
+router.get('/stats', authenticateToken, requireAdmin, (req, res) => {
   const db = getDb();
 
   const totalResult = db.exec('SELECT COUNT(*) as count FROM packages');
@@ -102,8 +144,8 @@ router.get('/:trackingNumber', (req, res) => {
   res.json(formatPackage(pkg));
 });
 
-// POST /api/packages - Create new package
-router.post('/', (req, res) => {
+// POST /api/packages - Create new package (public, optionally associates customer)
+router.post('/', async (req, res) => {
   const { sender, recipient, package: pkgInfo, price, expectedDelivery } = req.body;
   const db = getDb();
 
@@ -111,17 +153,30 @@ router.post('/', (req, res) => {
   const trackingNumber = 'MNG' + Math.floor(100000 + Math.random() * 900000);
   const requestDate = new Date().toISOString();
 
+  // Optionally extract customer_id from JWT if logged in
+  let customerId = null;
+  const authHeader = req.headers['authorization'];
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded && decoded.role === 'customer') {
+        customerId = decoded.id;
+      }
+    }
+  }
+
   try {
     db.run(`
       INSERT INTO packages (
-        tracking_number, sender_name, sender_phone, sender_address, sender_city, sender_zip,
-        recipient_name, recipient_phone, recipient_address, recipient_city, recipient_zip,
+        tracking_number, customer_id, sender_name, sender_phone, sender_address, sender_city, sender_zip, sender_email,
+        recipient_name, recipient_phone, recipient_address, recipient_city, recipient_zip, recipient_email,
         weight, speed, description, price, status, request_date, expected_delivery
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending Pickup', ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending Pickup', ?, ?)
     `, [
-      trackingNumber,
-      sender.name, sender.phone, sender.address, sender.city, sender.zip,
-      recipient.name, recipient.phone, recipient.address, recipient.city, recipient.zip,
+      trackingNumber, customerId,
+      sender.name, sender.phone, sender.address, sender.city, sender.zip, sender.email || null,
+      recipient.name, recipient.phone, recipient.address, recipient.city, recipient.zip, recipient.email || null,
       pkgInfo.weight, pkgInfo.speed, pkgInfo.description || '',
       price, requestDate, expectedDelivery
     ]);
@@ -144,11 +199,22 @@ router.post('/', (req, res) => {
         : 'TBD';
       db.run(
         'INSERT INTO timeline_events (tracking_number, date, status, location, completed) VALUES (?, ?, ?, ?, ?)',
-        ['Pending', status, location, 0]
+        [trackingNumber, 'Pending', status, location, 0]
       );
     }
 
     saveDatabase();
+
+    // Send confirmation email if sender email provided
+    if (sender.email) {
+      sendPickupConfirmation({
+        to: sender.email,
+        trackingNumber,
+        senderName: sender.name,
+        recipientName: recipient.name,
+        expectedDelivery
+      }).catch(err => console.error('Failed to send confirmation email:', err));
+    }
 
     // Return created package
     const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
@@ -161,8 +227,59 @@ router.post('/', (req, res) => {
   }
 });
 
-// PUT /api/packages/:trackingNumber - Update package status
-router.put('/:trackingNumber', (req, res) => {
+// PATCH /api/packages/:trackingNumber - Partial update (admin only)
+router.patch('/:trackingNumber', authenticateToken, requireAdmin, (req, res) => {
+  const { trackingNumber } = req.params;
+  const db = getDb();
+
+  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+  const pkg = resultToObject(result);
+
+  if (!pkg) {
+    return res.status(404).json({ error: 'Package not found' });
+  }
+
+  const allowedFields = {
+    sender_name: 'sender_name', sender_phone: 'sender_phone',
+    sender_address: 'sender_address', sender_city: 'sender_city',
+    sender_zip: 'sender_zip', sender_email: 'sender_email',
+    recipient_name: 'recipient_name', recipient_phone: 'recipient_phone',
+    recipient_address: 'recipient_address', recipient_city: 'recipient_city',
+    recipient_zip: 'recipient_zip', recipient_email: 'recipient_email',
+    weight: 'weight', speed: 'speed', description: 'description',
+    price: 'price', expected_delivery: 'expected_delivery'
+  };
+
+  const updates = [];
+  const values = [];
+
+  for (const [key, col] of Object.entries(allowedFields)) {
+    if (req.body[key] !== undefined) {
+      updates.push(`${col} = ?`);
+      values.push(req.body[key]);
+    }
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'No valid fields to update' });
+  }
+
+  try {
+    values.push(trackingNumber);
+    db.run(`UPDATE packages SET ${updates.join(', ')} WHERE tracking_number = ?`, values);
+    saveDatabase();
+
+    const updatedResult = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    const updatedPkg = resultToObject(updatedResult);
+    res.json(formatPackage(updatedPkg));
+  } catch (error) {
+    console.error('Error updating package:', error);
+    res.status(500).json({ error: 'Failed to update package' });
+  }
+});
+
+// PUT /api/packages/:trackingNumber - Update package status (admin only)
+router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res) => {
   const { trackingNumber } = req.params;
   const { status, location } = req.body;
   const db = getDb();
@@ -200,6 +317,16 @@ router.put('/:trackingNumber', (req, res) => {
 
     saveDatabase();
 
+    // Send status update email if recipient email exists
+    if (pkg.recipient_email) {
+      sendStatusUpdate({
+        to: pkg.recipient_email,
+        trackingNumber,
+        status,
+        recipientName: pkg.recipient_name
+      }).catch(err => console.error('Failed to send status update email:', err));
+    }
+
     const updatedResult = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
     const updatedPkg = resultToObject(updatedResult);
     res.json(formatPackage(updatedPkg));
@@ -210,8 +337,33 @@ router.put('/:trackingNumber', (req, res) => {
   }
 });
 
-// DELETE /api/packages/:trackingNumber - Delete package
-router.delete('/:trackingNumber', (req, res) => {
+// POST /api/packages/:trackingNumber/photos - Upload package photos
+router.post('/:trackingNumber/photos', upload.array('photos', 5), (req, res) => {
+  const { trackingNumber } = req.params;
+  const db = getDb();
+
+  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+  const pkg = resultToObject(result);
+
+  if (!pkg) {
+    return res.status(404).json({ error: 'Package not found' });
+  }
+
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No photos uploaded' });
+  }
+
+  const photoUrls = req.files.map(f => `/uploads/${trackingNumber}/${f.filename}`);
+
+  res.json({
+    success: true,
+    photos: photoUrls,
+    message: `${req.files.length} photo(s) uploaded successfully`
+  });
+});
+
+// DELETE /api/packages/:trackingNumber - Delete package (admin only)
+router.delete('/:trackingNumber', authenticateToken, requireAdmin, (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
