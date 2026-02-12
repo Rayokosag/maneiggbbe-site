@@ -12,6 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isTest = process.env.NODE_ENV === 'test';
 
+// Trust proxy (required for Koyeb/cloud deployments)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false,
