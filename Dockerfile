@@ -2,20 +2,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy frontend files
-COPY *.html ./
-COPY css ./css
-COPY js ./js
-COPY images ./images
-
-# Copy server files
+# Copy package files first
 COPY server/package.json ./server/
+
+# Install dependencies
 WORKDIR /app/server
-RUN npm install --production
+RUN npm install
 
-COPY server/*.js ./
-COPY server/routes ./routes
+# Copy all files
+WORKDIR /app
+COPY . .
 
+# Set working directory for server
 WORKDIR /app/server
 
 EXPOSE 3000
