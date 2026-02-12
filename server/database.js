@@ -1,4 +1,4 @@
-const { createClient } = require('@libsql/client');
+const { createClient } = require('@libsql/client/web');
 const bcrypt = require('bcryptjs');
 
 const client = createClient({
@@ -6,7 +6,7 @@ const client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN
 });
 
-// Wrapper to match old sql.js interface
+// Wrapper to match old interface
 const db = {
   async run(sql, params = []) {
     return await client.execute({ sql, args: params });
@@ -25,6 +25,8 @@ const db = {
 };
 
 async function initDatabase() {
+  console.log('Connecting to Turso database...');
+
   // Create tables
   await db.run(`
     CREATE TABLE IF NOT EXISTS admins (
@@ -98,12 +100,6 @@ async function initDatabase() {
     )
   `);
 
-  // Create indexes
-  await db.run('CREATE INDEX IF NOT EXISTS idx_packages_tracking ON packages(tracking_number)');
-  await db.run('CREATE INDEX IF NOT EXISTS idx_packages_customer ON packages(customer_id)');
-  await db.run('CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON timeline_events(tracking_number)');
-  await db.run('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)');
-
   // Seed default admin if not exists
   const adminResult = await db.get("SELECT id FROM admins WHERE username = ?", ['admin']);
   if (!adminResult) {
@@ -130,7 +126,7 @@ function getDb() {
 }
 
 function saveDatabase() {
-  // Not needed for Turso - data auto-saves
+  // Not needed for Turso
 }
 
 async function seedDemoData() {
@@ -140,60 +136,60 @@ async function seedDemoData() {
       sender_name: 'John Doe',
       sender_phone: '(555) 123-4567',
       sender_address: '123 Main St',
-      sender_city: 'New York',
-      sender_zip: '10001',
+      sender_city: 'Vancouver',
+      sender_zip: 'V6B 1A1',
       recipient_name: 'Jane Smith',
       recipient_phone: '(555) 987-6543',
       recipient_address: '456 Oak Ave',
-      recipient_city: 'Los Angeles',
-      recipient_zip: '90001',
+      recipient_city: 'Burnaby',
+      recipient_zip: 'V5H 2N9',
       weight: 2.5,
       speed: 'express',
       description: 'Electronics',
       price: '$12.99',
       status: 'In Transit',
       request_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      expected_delivery: 'Jan 22, 2026'
+      expected_delivery: 'Feb 15, 2026'
     },
     {
       tracking_number: 'MNG789012',
       sender_name: 'Alice Johnson',
       sender_phone: '(555) 234-5678',
       sender_address: '789 Pine Rd',
-      sender_city: 'Chicago',
-      sender_zip: '60601',
+      sender_city: 'Richmond',
+      sender_zip: 'V6Y 2B3',
       recipient_name: 'Bob Wilson',
       recipient_phone: '(555) 876-5432',
       recipient_address: '321 Elm St',
-      recipient_city: 'Houston',
-      recipient_zip: '77001',
+      recipient_city: 'Surrey',
+      recipient_zip: 'V3T 4W2',
       weight: 5.0,
       speed: 'standard',
       description: 'Books',
       price: '$5.99',
       status: 'Delivered',
       request_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      expected_delivery: 'Jan 18, 2026'
+      expected_delivery: 'Feb 10, 2026'
     },
     {
       tracking_number: 'MNG345678',
       sender_name: 'Charlie Brown',
       sender_phone: '(555) 345-6789',
       sender_address: '555 Cedar Ln',
-      sender_city: 'Phoenix',
-      sender_zip: '85001',
+      sender_city: 'Vancouver',
+      sender_zip: 'V5K 1A1',
       recipient_name: 'Diana Prince',
       recipient_phone: '(555) 765-4321',
       recipient_address: '999 Maple Dr',
-      recipient_city: 'Seattle',
-      recipient_zip: '98101',
+      recipient_city: 'North Vancouver',
+      recipient_zip: 'V7L 1A1',
       weight: 1.0,
       speed: 'overnight',
       description: 'Documents',
       price: '$24.99',
       status: 'Pending Pickup',
       request_date: new Date().toISOString(),
-      expected_delivery: 'Jan 21, 2026'
+      expected_delivery: 'Feb 13, 2026'
     }
   ];
 
@@ -210,7 +206,6 @@ async function seedDemoData() {
       pkg.weight, pkg.speed, pkg.description, pkg.price, pkg.status, pkg.request_date, pkg.expected_delivery
     ]);
 
-    // Add timeline events
     const timeline = generateTimeline(pkg);
     for (const event of timeline) {
       await db.run(
@@ -225,29 +220,24 @@ function generateTimeline(pkg) {
   const events = [];
   const statuses = ['Pending Pickup', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
   const currentIndex = statuses.indexOf(pkg.status);
-
   const baseDate = new Date(pkg.request_date);
 
   for (let i = 0; i <= currentIndex; i++) {
     const eventDate = new Date(baseDate);
     eventDate.setDate(eventDate.getDate() + i);
-
     events.push({
       date: eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       status: statuses[i],
-      location: i === 0 ? `${pkg.sender_city}, ${pkg.sender_zip.substring(0, 2)}` :
-                i === statuses.length - 1 ? `${pkg.recipient_city}, ${pkg.recipient_zip.substring(0, 2)}` :
-                'Distribution Center',
+      location: i === 0 ? `${pkg.sender_city}` : i === statuses.length - 1 ? `${pkg.recipient_city}` : 'Distribution Center',
       completed: true
     });
   }
 
-  // Add future events as incomplete
   for (let i = currentIndex + 1; i < statuses.length; i++) {
     events.push({
       date: 'Pending',
       status: statuses[i],
-      location: i === statuses.length - 1 ? `${pkg.recipient_city}, ${pkg.recipient_zip.substring(0, 2)}` : 'TBD',
+      location: i === statuses.length - 1 ? `${pkg.recipient_city}` : 'TBD',
       completed: false
     });
   }

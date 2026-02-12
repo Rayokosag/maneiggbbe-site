@@ -1,21 +1,16 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files first
-COPY server/package.json ./server/
+# Copy everything
+COPY . .
 
 # Install dependencies
 WORKDIR /app/server
-RUN npm install
+RUN npm install --production
 
-# Copy all files
-WORKDIR /app
-COPY . .
-
-# Set working directory for server
-WORKDIR /app/server
-
+# Expose port
 EXPOSE 3000
 
+# Start server
 CMD ["node", "server.js"]
