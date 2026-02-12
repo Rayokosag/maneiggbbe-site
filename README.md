@@ -1,24 +1,26 @@
 # Maneigbbe Delivery
 
-A package delivery tracking website (like UPS) for **Maneigbbe Delivery Service & Technology Inc**.
+A package delivery tracking website for **Maneigbbe Delivery Service & Technology Inc**.
 
-## Quick Start
+**Live Site:** https://www.maneiggbbe.com
+
+## Quick Start (Local Development)
 
 ```bash
 cd server
 npm install
 npm start
 ```
-Open http://localhost:3000 in your browser.
+Open http://localhost:3000
 
 ## Features
 
 - Track packages with tracking number
 - Request pickup with pricing calculator
 - Admin dashboard to manage packages
-- Customer registration & login (Email + Google)
-- Email & SMS notifications
-- Photo upload for packages
+- Customer registration & login
+- Email notifications
+- Distance-based pricing
 
 ## Project Structure
 
@@ -31,23 +33,29 @@ maneigbbe-delivery/
 ├── admin.html                # Admin dashboard
 ├── customer-login.html       # Customer login
 ├── register.html             # Customer signup
+├── forgot-password.html      # Password reset
+├── reset-password.html       # Reset password
+├── customer-dashboard.html   # Customer dashboard
 ├── css/styles.css            # Styles
 ├── js/                       # Frontend scripts
 ├── images/                   # Logo & images
-└── server/                   # Backend (Node.js)
+├── server/                   # Backend (Node.js)
+└── Dockerfile                # Docker deployment
 ```
+
+## Tech Stack
+
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** Node.js, Express
+- **Database:** Turso (LibSQL cloud database)
+- **Hosting:** Koyeb
+- **Domain:** Namecheap
 
 ## Default Login
 
 | Role | Username | Password |
 |------|----------|----------|
 | Admin | admin | admin123 |
-
-## Tech Stack
-
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Node.js, Express
-- **Database:** SQLite
 
 ## Pricing
 
@@ -67,17 +75,32 @@ maneigbbe-delivery/
 4. Out for Delivery
 5. Delivered
 
-## Environment Setup
+## Deployment
 
-Copy `.env.example` to `.env` in the server folder and update:
+### Environment Variables (Koyeb)
 
 ```
-JWT_SECRET=your-secret-key
-TWILIO_ACCOUNT_SID=your-twilio-sid
-TWILIO_AUTH_TOKEN=your-twilio-token
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-secret
+TURSO_DATABASE_URL=libsql://your-database.turso.io
+TURSO_AUTH_TOKEN=your-token
+PORT=3000
 ```
+
+### Deploy to Koyeb
+
+1. Push code to GitHub
+2. Create Koyeb service from GitHub repo
+3. Select Dockerfile as builder
+4. Add environment variables
+5. Deploy
+
+## Services Used
+
+| Service | Purpose | Cost |
+|---------|---------|------|
+| Koyeb | Hosting | Free |
+| Turso | Database | Free (9GB) |
+| Namecheap | Domain | Paid |
+| GitHub | Code repo | Free |
 
 ## License
 
