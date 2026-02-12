@@ -18,41 +18,40 @@ if (!isTest) {
 }
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
   }
 
-  const db = getDb();
-  const result = db.exec('SELECT * FROM admins WHERE username = ?', [username]);
+  try {
+    const db = getDb();
+    const admin = await db.get('SELECT * FROM admins WHERE username = ?', [username]);
 
-  if (result.length === 0 || result[0].values.length === 0) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const validPassword = bcrypt.compareSync(password, admin.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = signToken({ id: admin.id, username: admin.username, role: 'admin' });
+
+    res.json({
+      success: true,
+      token,
+      username: admin.username,
+      loginTime: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
   }
-
-  // Convert result to object
-  const columns = result[0].columns;
-  const values = result[0].values[0];
-  const admin = {};
-  columns.forEach((col, i) => admin[col] = values[i]);
-
-  const validPassword = bcrypt.compareSync(password, admin.password_hash);
-
-  if (!validPassword) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  // Generate JWT token
-  const token = signToken({ id: admin.id, username: admin.username, role: 'admin' });
-
-  res.json({
-    success: true,
-    token,
-    username: admin.username,
-    loginTime: new Date().toISOString()
-  });
 });
 
 // POST /api/auth/logout

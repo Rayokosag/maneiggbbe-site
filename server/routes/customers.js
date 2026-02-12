@@ -14,49 +14,25 @@ const {
 const { getPassport } = require('../oauth');
 const { sendPasswordReset } = require('../email');
 
-// Helper to convert SQL result to object
-function resultToObject(result) {
-  if (!result || result.length === 0) return null;
-  const columns = result[0].columns;
-  const values = result[0].values[0];
-  if (!values) return null;
-  const obj = {};
-  columns.forEach((col, i) => obj[col] = values[i]);
-  return obj;
-}
-
-// Helper to convert SQL result to array of objects
-function resultToObjects(result) {
-  if (!result || result.length === 0) return [];
-  const columns = result[0].columns;
-  return result[0].values.map(row => {
-    const obj = {};
-    columns.forEach((col, i) => obj[col] = row[i]);
-    return obj;
-  });
-}
-
 // POST /api/customers/register
-router.post('/register', validateCustomerRegistration, (req, res) => {
+router.post('/register', validateCustomerRegistration, async (req, res) => {
   const { name, email, password, phone } = req.body;
   const db = getDb();
 
-  const existing = db.exec('SELECT id FROM customers WHERE email = ?', [email]);
-  if (existing.length > 0 && existing[0].values.length > 0) {
-    return res.status(409).json({ error: 'Email already registered' });
-  }
-
   try {
+    const existing = await db.get('SELECT id FROM customers WHERE email = ?', [email]);
+    if (existing) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
     const hash = bcrypt.hashSync(password, 10);
-    db.run(
+    await db.run(
       'INSERT INTO customers (name, email, password_hash, phone) VALUES (?, ?, ?, ?)',
       [name, email, hash, phone || null]
     );
     saveDatabase();
 
-    const result = db.exec('SELECT * FROM customers WHERE email = ?', [email]);
-    const customer = resultToObject(result);
-
+    const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
     const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
 
     res.status(201).json({
@@ -76,77 +52,84 @@ router.post('/register', validateCustomerRegistration, (req, res) => {
 });
 
 // POST /api/customers/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const db = getDb();
-  const result = db.exec('SELECT * FROM customers WHERE email = ?', [email]);
-  const customer = resultToObject(result);
+  try {
+    const db = getDb();
+    const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
 
-  if (!customer) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  if (!customer.password_hash) {
-    return res.status(401).json({ error: 'This account uses Google Sign-In' });
-  }
-
-  const validPassword = bcrypt.compareSync(password, customer.password_hash);
-  if (!validPassword) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
-
-  res.json({
-    success: true,
-    token,
-    customer: {
-      id: customer.id,
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone
+    if (!customer) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
-  });
+
+    if (!customer.password_hash) {
+      return res.status(401).json({ error: 'This account uses Google Sign-In' });
+    }
+
+    const validPassword = bcrypt.compareSync(password, customer.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
+
+    res.json({
+      success: true,
+      token,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
 });
 
 // GET /api/customers/profile - Get customer profile
-router.get('/profile', authenticateToken, (req, res) => {
-  const db = getDb();
-  const result = db.exec('SELECT * FROM customers WHERE id = ?', [req.user.id]);
-  const customer = resultToObject(result);
+router.get('/profile', authenticateToken, async (req, res) => {
+  try {
+    const db = getDb();
+    const customer = await db.get('SELECT * FROM customers WHERE id = ?', [req.user.id]);
 
-  if (!customer) {
-    return res.status(404).json({ error: 'Customer not found' });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    res.json({
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      createdAt: customer.created_at
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
-
-  res.json({
-    id: customer.id,
-    name: customer.name,
-    email: customer.email,
-    phone: customer.phone,
-    createdAt: customer.created_at
-  });
 });
 
 // PUT /api/customers/profile - Update customer profile
-router.put('/profile', authenticateToken, validateProfileUpdate, (req, res) => {
+router.put('/profile', authenticateToken, validateProfileUpdate, async (req, res) => {
   const { name, email, phone } = req.body;
   const db = getDb();
 
-  // Check if email is being changed and is already taken
-  if (email) {
-    const existing = db.exec('SELECT id FROM customers WHERE email = ? AND id != ?', [email, req.user.id]);
-    if (existing.length > 0 && existing[0].values.length > 0) {
-      return res.status(409).json({ error: 'Email already in use' });
-    }
-  }
-
   try {
+    if (email) {
+      const existing = await db.get('SELECT id FROM customers WHERE email = ? AND id != ?', [email, req.user.id]);
+      if (existing) {
+        return res.status(409).json({ error: 'Email already in use' });
+      }
+    }
+
     const updates = [];
     const values = [];
     if (name !== undefined) { updates.push('name = ?'); values.push(name); }
@@ -158,11 +141,10 @@ router.put('/profile', authenticateToken, validateProfileUpdate, (req, res) => {
     }
 
     values.push(req.user.id);
-    db.run(`UPDATE customers SET ${updates.join(', ')} WHERE id = ?`, values);
+    await db.run(`UPDATE customers SET ${updates.join(', ')} WHERE id = ?`, values);
     saveDatabase();
 
-    const result = db.exec('SELECT * FROM customers WHERE id = ?', [req.user.id]);
-    const customer = resultToObject(result);
+    const customer = await db.get('SELECT * FROM customers WHERE id = ?', [req.user.id]);
 
     res.json({
       id: customer.id,
@@ -177,29 +159,28 @@ router.put('/profile', authenticateToken, validateProfileUpdate, (req, res) => {
 });
 
 // PUT /api/customers/password - Change password
-router.put('/password', authenticateToken, validatePasswordChange, (req, res) => {
+router.put('/password', authenticateToken, validatePasswordChange, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const db = getDb();
 
-  const result = db.exec('SELECT * FROM customers WHERE id = ?', [req.user.id]);
-  const customer = resultToObject(result);
-
-  if (!customer) {
-    return res.status(404).json({ error: 'Customer not found' });
-  }
-
-  if (!customer.password_hash) {
-    return res.status(400).json({ error: 'This account uses Google Sign-In. Set a password via forgot password.' });
-  }
-
-  const validPassword = bcrypt.compareSync(currentPassword, customer.password_hash);
-  if (!validPassword) {
-    return res.status(401).json({ error: 'Current password is incorrect' });
-  }
-
   try {
+    const customer = await db.get('SELECT * FROM customers WHERE id = ?', [req.user.id]);
+
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    if (!customer.password_hash) {
+      return res.status(400).json({ error: 'This account uses Google Sign-In. Set a password via forgot password.' });
+    }
+
+    const validPassword = bcrypt.compareSync(currentPassword, customer.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
     const hash = bcrypt.hashSync(newPassword, 10);
-    db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
+    await db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
     saveDatabase();
 
     res.json({ success: true, message: 'Password updated successfully' });
@@ -210,7 +191,7 @@ router.put('/password', authenticateToken, validatePasswordChange, (req, res) =>
 });
 
 // GET /api/customers/packages - List customer's packages
-router.get('/packages', authenticateToken, (req, res) => {
+router.get('/packages', authenticateToken, async (req, res) => {
   const db = getDb();
   const { page = 1, limit = 20 } = req.query;
 
@@ -218,53 +199,62 @@ router.get('/packages', authenticateToken, (req, res) => {
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
   const offset = (pageNum - 1) * limitNum;
 
-  const countResult = db.exec('SELECT COUNT(*) FROM packages WHERE customer_id = ?', [req.user.id]);
-  const total = countResult[0]?.values[0][0] || 0;
+  try {
+    const countResult = await db.get('SELECT COUNT(*) as count FROM packages WHERE customer_id = ?', [req.user.id]);
+    const total = countResult?.count || 0;
 
-  const result = db.exec(
-    'SELECT * FROM packages WHERE customer_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
-    [req.user.id, limitNum, offset]
-  );
-  const packages = resultToObjects(result);
+    const packages = await db.all(
+      'SELECT * FROM packages WHERE customer_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [req.user.id, limitNum, offset]
+    );
 
-  res.json({
-    packages: packages.map(pkg => ({
-      trackingNumber: pkg.tracking_number,
-      senderName: pkg.sender_name,
-      recipientName: pkg.recipient_name,
-      from: `${pkg.sender_city}, ${pkg.sender_zip}`,
-      to: `${pkg.recipient_city}, ${pkg.recipient_zip}`,
-      status: pkg.status,
-      speed: pkg.speed,
-      price: pkg.price,
-      requestDate: pkg.request_date,
-      expectedDelivery: pkg.expected_delivery
-    })),
-    pagination: {
-      page: pageNum,
-      limit: limitNum,
-      total,
-      totalPages: Math.ceil(total / limitNum)
-    }
-  });
+    res.json({
+      packages: packages.map(pkg => ({
+        trackingNumber: pkg.tracking_number,
+        senderName: pkg.sender_name,
+        recipientName: pkg.recipient_name,
+        from: `${pkg.sender_city}, ${pkg.sender_zip}`,
+        to: `${pkg.recipient_city}, ${pkg.recipient_zip}`,
+        status: pkg.status,
+        speed: pkg.speed,
+        price: pkg.price,
+        requestDate: pkg.request_date,
+        expectedDelivery: pkg.expected_delivery
+      })),
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
 });
 
 // GET /api/customers/packages/stats - Customer package stats
-router.get('/packages/stats', authenticateToken, (req, res) => {
+router.get('/packages/stats', authenticateToken, async (req, res) => {
   const db = getDb();
   const id = req.user.id;
 
-  const totalResult = db.exec('SELECT COUNT(*) FROM packages WHERE customer_id = ?', [id]);
-  const inTransitResult = db.exec("SELECT COUNT(*) FROM packages WHERE customer_id = ? AND status = 'In Transit'", [id]);
-  const deliveredResult = db.exec("SELECT COUNT(*) FROM packages WHERE customer_id = ? AND status = 'Delivered'", [id]);
-  const pendingResult = db.exec("SELECT COUNT(*) FROM packages WHERE customer_id = ? AND status = 'Pending Pickup'", [id]);
+  try {
+    const total = await db.get('SELECT COUNT(*) as count FROM packages WHERE customer_id = ?', [id]);
+    const inTransit = await db.get("SELECT COUNT(*) as count FROM packages WHERE customer_id = ? AND status = 'In Transit'", [id]);
+    const delivered = await db.get("SELECT COUNT(*) as count FROM packages WHERE customer_id = ? AND status = 'Delivered'", [id]);
+    const pending = await db.get("SELECT COUNT(*) as count FROM packages WHERE customer_id = ? AND status = 'Pending Pickup'", [id]);
 
-  res.json({
-    total: totalResult[0]?.values[0][0] || 0,
-    inTransit: inTransitResult[0]?.values[0][0] || 0,
-    delivered: deliveredResult[0]?.values[0][0] || 0,
-    pending: pendingResult[0]?.values[0][0] || 0
-  });
+    res.json({
+      total: total?.count || 0,
+      inTransit: inTransit?.count || 0,
+      delivered: delivered?.count || 0,
+      pending: pending?.count || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
 });
 
 // POST /api/customers/forgot-password - Request password reset
@@ -272,58 +262,59 @@ router.post('/forgot-password', validateForgotPassword, async (req, res) => {
   const { email } = req.body;
   const db = getDb();
 
-  // Always return success to prevent email enumeration
-  const result = db.exec('SELECT * FROM customers WHERE email = ?', [email]);
-  const customer = resultToObject(result);
+  try {
+    const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
 
-  if (customer) {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+    if (customer) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-    db.run(
-      'INSERT INTO password_reset_tokens (customer_id, token, expires_at) VALUES (?, ?, ?)',
-      [customer.id, token, expiresAt]
-    );
-    saveDatabase();
+      await db.run(
+        'INSERT INTO password_reset_tokens (customer_id, token, expires_at) VALUES (?, ?, ?)',
+        [customer.id, token, expiresAt]
+      );
+      saveDatabase();
 
-    // Send reset email
-    try {
-      await sendPasswordReset({
-        to: email,
-        name: customer.name,
-        token
-      });
-    } catch (err) {
-      console.error('Failed to send password reset email:', err);
+      try {
+        await sendPasswordReset({
+          to: email,
+          name: customer.name,
+          token
+        });
+      } catch (err) {
+        console.error('Failed to send password reset email:', err);
+      }
     }
-  }
 
-  res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('Error in forgot password:', error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
 });
 
 // POST /api/customers/reset-password - Reset password with token
-router.post('/reset-password', validatePasswordReset, (req, res) => {
+router.post('/reset-password', validatePasswordReset, async (req, res) => {
   const { token, password } = req.body;
   const db = getDb();
 
-  const result = db.exec(
-    'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0',
-    [token]
-  );
-  const resetToken = resultToObject(result);
-
-  if (!resetToken) {
-    return res.status(400).json({ error: 'Invalid or expired reset token' });
-  }
-
-  if (new Date(resetToken.expires_at) < new Date()) {
-    return res.status(400).json({ error: 'Reset token has expired' });
-  }
-
   try {
+    const resetToken = await db.get(
+      'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0',
+      [token]
+    );
+
+    if (!resetToken) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    if (new Date(resetToken.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Reset token has expired' });
+    }
+
     const hash = bcrypt.hashSync(password, 10);
-    db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, resetToken.customer_id]);
-    db.run('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [resetToken.id]);
+    await db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, resetToken.customer_id]);
+    await db.run('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [resetToken.id]);
     saveDatabase();
 
     res.json({ success: true, message: 'Password has been reset successfully' });
@@ -352,34 +343,36 @@ router.get('/auth/google/callback', (req, res, next) => {
 
   const redirectPage = req.query.state === 'register' ? 'register.html' : 'customer-login.html';
 
-  passport.authenticate('google', { failureRedirect: `/${redirectPage}?error=auth_failed` })(req, res, () => {
+  passport.authenticate('google', { failureRedirect: `/${redirectPage}?error=auth_failed` })(req, res, async () => {
     const db = getDb();
     const googleUser = req.user;
 
-    let result = db.exec('SELECT * FROM customers WHERE google_id = ?', [googleUser.googleId]);
-    let customer = resultToObject(result);
+    try {
+      let customer = await db.get('SELECT * FROM customers WHERE google_id = ?', [googleUser.googleId]);
 
-    if (!customer && googleUser.email) {
-      result = db.exec('SELECT * FROM customers WHERE email = ?', [googleUser.email]);
-      customer = resultToObject(result);
-      if (customer) {
-        db.run('UPDATE customers SET google_id = ? WHERE id = ?', [googleUser.googleId, customer.id]);
-        saveDatabase();
+      if (!customer && googleUser.email) {
+        customer = await db.get('SELECT * FROM customers WHERE email = ?', [googleUser.email]);
+        if (customer) {
+          await db.run('UPDATE customers SET google_id = ? WHERE id = ?', [googleUser.googleId, customer.id]);
+          saveDatabase();
+        }
       }
-    }
 
-    if (!customer) {
-      db.run(
-        'INSERT INTO customers (name, email, google_id) VALUES (?, ?, ?)',
-        [googleUser.name, googleUser.email, googleUser.googleId]
-      );
-      saveDatabase();
-      result = db.exec('SELECT * FROM customers WHERE google_id = ?', [googleUser.googleId]);
-      customer = resultToObject(result);
-    }
+      if (!customer) {
+        await db.run(
+          'INSERT INTO customers (name, email, google_id) VALUES (?, ?, ?)',
+          [googleUser.name, googleUser.email, googleUser.googleId]
+        );
+        saveDatabase();
+        customer = await db.get('SELECT * FROM customers WHERE google_id = ?', [googleUser.googleId]);
+      }
 
-    const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
-    res.redirect(`/${redirectPage}?token=${token}&name=${encodeURIComponent(customer.name)}`);
+      const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
+      res.redirect(`/${redirectPage}?token=${token}&name=${encodeURIComponent(customer.name)}`);
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`/${redirectPage}?error=auth_failed`);
+    }
   });
 });
 

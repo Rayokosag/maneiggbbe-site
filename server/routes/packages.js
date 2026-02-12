@@ -6,31 +6,13 @@ const { upload, getPhotosForPackage } = require('../upload');
 const { authenticateToken, verifyToken } = require('../jwt');
 const { requireAdmin } = require('../roles');
 
-// Helper to convert SQL result to array of objects
-function resultToObjects(result) {
-  if (!result || result.length === 0) return [];
-  const columns = result[0].columns;
-  return result[0].values.map(row => {
-    const obj = {};
-    columns.forEach((col, i) => obj[col] = row[i]);
-    return obj;
-  });
-}
-
-// Helper to get single object from result
-function resultToObject(result) {
-  const objects = resultToObjects(result);
-  return objects.length > 0 ? objects[0] : null;
-}
-
 // Helper to format package with timeline and photos
-function formatPackage(pkg) {
+async function formatPackage(pkg) {
   const db = getDb();
-  const timelineResult = db.exec(
+  const timeline = await db.all(
     'SELECT date, status, location, completed FROM timeline_events WHERE tracking_number = ? ORDER BY id',
     [pkg.tracking_number]
   );
-  const timeline = resultToObjects(timelineResult);
   const photos = getPhotosForPackage(pkg.tracking_number);
 
   return {
@@ -73,7 +55,7 @@ function formatPackage(pkg) {
 }
 
 // GET /api/packages - List all packages with pagination, filtering, sorting (admin only)
-router.get('/', authenticateToken, requireAdmin, (req, res) => {
+router.get('/', authenticateToken, requireAdmin, async (req, res) => {
   const db = getDb();
   const { page = 1, limit = 20, status, sortBy = 'created_at', sortOrder = 'DESC' } = req.query;
 
@@ -81,79 +63,93 @@ router.get('/', authenticateToken, requireAdmin, (req, res) => {
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
   const offset = (pageNum - 1) * limitNum;
 
-  // Validate sort parameters
   const allowedSortFields = ['created_at', 'tracking_number', 'status', 'sender_name', 'recipient_name', 'weight'];
   const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
   const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-  let whereClause = '';
-  const params = [];
+  try {
+    let countResult, packages;
 
-  if (status) {
-    whereClause = 'WHERE status = ?';
-    params.push(status);
-  }
-
-  // Get total count
-  const countResult = db.exec(`SELECT COUNT(*) as count FROM packages ${whereClause}`, params);
-  const total = countResult[0]?.values[0][0] || 0;
-
-  // Get paginated results
-  const query = `SELECT * FROM packages ${whereClause} ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`;
-  const result = db.exec(query, [...params, limitNum, offset]);
-  const packages = resultToObjects(result);
-
-  res.json({
-    packages: packages.map(formatPackage),
-    pagination: {
-      page: pageNum,
-      limit: limitNum,
-      total,
-      totalPages: Math.ceil(total / limitNum)
+    if (status) {
+      countResult = await db.get('SELECT COUNT(*) as count FROM packages WHERE status = ?', [status]);
+      packages = await db.all(
+        `SELECT * FROM packages WHERE status = ? ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
+        [status, limitNum, offset]
+      );
+    } else {
+      countResult = await db.get('SELECT COUNT(*) as count FROM packages');
+      packages = await db.all(
+        `SELECT * FROM packages ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
+        [limitNum, offset]
+      );
     }
-  });
+
+    const total = countResult?.count || 0;
+    const formattedPackages = await Promise.all(packages.map(formatPackage));
+
+    res.json({
+      packages: formattedPackages,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
 });
 
 // GET /api/packages/stats - Get dashboard statistics (admin only)
-router.get('/stats', authenticateToken, requireAdmin, (req, res) => {
+router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
   const db = getDb();
 
-  const totalResult = db.exec('SELECT COUNT(*) as count FROM packages');
-  const inTransitResult = db.exec("SELECT COUNT(*) as count FROM packages WHERE status = 'In Transit'");
-  const deliveredResult = db.exec("SELECT COUNT(*) as count FROM packages WHERE status = 'Delivered'");
-  const pendingResult = db.exec("SELECT COUNT(*) as count FROM packages WHERE status = 'Pending Pickup'");
+  try {
+    const total = await db.get('SELECT COUNT(*) as count FROM packages');
+    const inTransit = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'In Transit'");
+    const delivered = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Delivered'");
+    const pending = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Pending Pickup'");
 
-  res.json({
-    total: totalResult[0]?.values[0][0] || 0,
-    inTransit: inTransitResult[0]?.values[0][0] || 0,
-    delivered: deliveredResult[0]?.values[0][0] || 0,
-    pending: pendingResult[0]?.values[0][0] || 0
-  });
+    res.json({
+      total: total?.count || 0,
+      inTransit: inTransit?.count || 0,
+      delivered: delivered?.count || 0,
+      pending: pending?.count || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
 });
 
 // GET /api/packages/:trackingNumber - Get single package
-router.get('/:trackingNumber', (req, res) => {
+router.get('/:trackingNumber', async (req, res) => {
   const db = getDb();
-  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [req.params.trackingNumber]);
-  const pkg = resultToObject(result);
 
-  if (!pkg) {
-    return res.status(404).json({ error: 'Package not found' });
+  try {
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [req.params.trackingNumber]);
+
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    res.json(await formatPackage(pkg));
+  } catch (error) {
+    console.error('Error fetching package:', error);
+    res.status(500).json({ error: 'Failed to fetch package' });
   }
-
-  res.json(formatPackage(pkg));
 });
 
-// POST /api/packages - Create new package (public, optionally associates customer)
+// POST /api/packages - Create new package
 router.post('/', async (req, res) => {
   const { sender, recipient, package: pkgInfo, price, expectedDelivery } = req.body;
   const db = getDb();
 
-  // Generate tracking number
   const trackingNumber = 'MNG' + Math.floor(100000 + Math.random() * 900000);
   const requestDate = new Date().toISOString();
 
-  // Optionally extract customer_id from JWT if logged in
   let customerId = null;
   const authHeader = req.headers['authorization'];
   if (authHeader) {
@@ -167,7 +163,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    db.run(`
+    await db.run(`
       INSERT INTO packages (
         tracking_number, customer_id, sender_name, sender_phone, sender_address, sender_city, sender_zip, sender_email,
         recipient_name, recipient_phone, recipient_address, recipient_city, recipient_zip, recipient_email,
@@ -181,23 +177,21 @@ router.post('/', async (req, res) => {
       price, requestDate, expectedDelivery
     ]);
 
-    // Insert initial timeline event
     const formattedDate = new Date().toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric'
     });
 
-    db.run(
+    await db.run(
       'INSERT INTO timeline_events (tracking_number, date, status, location, completed) VALUES (?, ?, ?, ?, ?)',
       [trackingNumber, formattedDate, 'Pending Pickup', `${sender.city}, ${sender.zip.substring(0, 2)}`, 1]
     );
 
-    // Add future timeline events as incomplete
     const futureStatuses = ['Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
     for (const status of futureStatuses) {
       const location = status === 'Delivered'
         ? `${recipient.city}, ${recipient.zip.substring(0, 2)}`
         : 'TBD';
-      db.run(
+      await db.run(
         'INSERT INTO timeline_events (tracking_number, date, status, location, completed) VALUES (?, ?, ?, ?, ?)',
         [trackingNumber, 'Pending', status, location, 0]
       );
@@ -205,7 +199,6 @@ router.post('/', async (req, res) => {
 
     saveDatabase();
 
-    // Send confirmation email if sender email provided
     if (sender.email) {
       sendPickupConfirmation({
         to: sender.email,
@@ -216,10 +209,8 @@ router.post('/', async (req, res) => {
       }).catch(err => console.error('Failed to send confirmation email:', err));
     }
 
-    // Return created package
-    const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-    const pkg = resultToObject(result);
-    res.status(201).json(formatPackage(pkg));
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    res.status(201).json(await formatPackage(pkg));
 
   } catch (error) {
     console.error('Error creating package:', error);
@@ -228,50 +219,48 @@ router.post('/', async (req, res) => {
 });
 
 // PATCH /api/packages/:trackingNumber - Partial update (admin only)
-router.patch('/:trackingNumber', authenticateToken, requireAdmin, (req, res) => {
+router.patch('/:trackingNumber', authenticateToken, requireAdmin, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
-  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-  const pkg = resultToObject(result);
-
-  if (!pkg) {
-    return res.status(404).json({ error: 'Package not found' });
-  }
-
-  const allowedFields = {
-    sender_name: 'sender_name', sender_phone: 'sender_phone',
-    sender_address: 'sender_address', sender_city: 'sender_city',
-    sender_zip: 'sender_zip', sender_email: 'sender_email',
-    recipient_name: 'recipient_name', recipient_phone: 'recipient_phone',
-    recipient_address: 'recipient_address', recipient_city: 'recipient_city',
-    recipient_zip: 'recipient_zip', recipient_email: 'recipient_email',
-    weight: 'weight', speed: 'speed', description: 'description',
-    price: 'price', expected_delivery: 'expected_delivery'
-  };
-
-  const updates = [];
-  const values = [];
-
-  for (const [key, col] of Object.entries(allowedFields)) {
-    if (req.body[key] !== undefined) {
-      updates.push(`${col} = ?`);
-      values.push(req.body[key]);
-    }
-  }
-
-  if (updates.length === 0) {
-    return res.status(400).json({ error: 'No valid fields to update' });
-  }
-
   try {
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    const allowedFields = {
+      sender_name: 'sender_name', sender_phone: 'sender_phone',
+      sender_address: 'sender_address', sender_city: 'sender_city',
+      sender_zip: 'sender_zip', sender_email: 'sender_email',
+      recipient_name: 'recipient_name', recipient_phone: 'recipient_phone',
+      recipient_address: 'recipient_address', recipient_city: 'recipient_city',
+      recipient_zip: 'recipient_zip', recipient_email: 'recipient_email',
+      weight: 'weight', speed: 'speed', description: 'description',
+      price: 'price', expected_delivery: 'expected_delivery'
+    };
+
+    const updates = [];
+    const values = [];
+
+    for (const [key, col] of Object.entries(allowedFields)) {
+      if (req.body[key] !== undefined) {
+        updates.push(`${col} = ?`);
+        values.push(req.body[key]);
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
     values.push(trackingNumber);
-    db.run(`UPDATE packages SET ${updates.join(', ')} WHERE tracking_number = ?`, values);
+    await db.run(`UPDATE packages SET ${updates.join(', ')} WHERE tracking_number = ?`, values);
     saveDatabase();
 
-    const updatedResult = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-    const updatedPkg = resultToObject(updatedResult);
-    res.json(formatPackage(updatedPkg));
+    const updatedPkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    res.json(await formatPackage(updatedPkg));
   } catch (error) {
     console.error('Error updating package:', error);
     res.status(500).json({ error: 'Failed to update package' });
@@ -284,32 +273,28 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res)
   const { status, location } = req.body;
   const db = getDb();
 
-  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-  const pkg = resultToObject(result);
-
-  if (!pkg) {
-    return res.status(404).json({ error: 'Package not found' });
-  }
-
   try {
-    // Update package status
-    db.run('UPDATE packages SET status = ? WHERE tracking_number = ?', [status, trackingNumber]);
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
 
-    // Update timeline
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    await db.run('UPDATE packages SET status = ? WHERE tracking_number = ?', [status, trackingNumber]);
+
     const formattedDate = new Date().toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric'
     });
 
-    db.run(
+    await db.run(
       'UPDATE timeline_events SET completed = 1, date = ?, location = ? WHERE tracking_number = ? AND status = ?',
       [formattedDate, location || 'Distribution Center', trackingNumber, status]
     );
 
-    // Mark all previous statuses as completed
     const statuses = ['Pending Pickup', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
     const currentIndex = statuses.indexOf(status);
     for (let i = 0; i < currentIndex; i++) {
-      db.run(
+      await db.run(
         'UPDATE timeline_events SET completed = 1 WHERE tracking_number = ? AND status = ? AND completed = 0',
         [trackingNumber, statuses[i]]
       );
@@ -317,7 +302,6 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res)
 
     saveDatabase();
 
-    // Send status update email if recipient email exists
     if (pkg.recipient_email) {
       sendStatusUpdate({
         to: pkg.recipient_email,
@@ -327,9 +311,8 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res)
       }).catch(err => console.error('Failed to send status update email:', err));
     }
 
-    const updatedResult = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-    const updatedPkg = resultToObject(updatedResult);
-    res.json(formatPackage(updatedPkg));
+    const updatedPkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    res.json(await formatPackage(updatedPkg));
 
   } catch (error) {
     console.error('Error updating package:', error);
@@ -338,45 +321,48 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res)
 });
 
 // POST /api/packages/:trackingNumber/photos - Upload package photos
-router.post('/:trackingNumber/photos', upload.array('photos', 5), (req, res) => {
+router.post('/:trackingNumber/photos', upload.array('photos', 5), async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
-  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-  const pkg = resultToObject(result);
+  try {
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
 
-  if (!pkg) {
-    return res.status(404).json({ error: 'Package not found' });
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No photos uploaded' });
+    }
+
+    const photoUrls = req.files.map(f => `/uploads/${trackingNumber}/${f.filename}`);
+
+    res.json({
+      success: true,
+      photos: photoUrls,
+      message: `${req.files.length} photo(s) uploaded successfully`
+    });
+  } catch (error) {
+    console.error('Error uploading photos:', error);
+    res.status(500).json({ error: 'Failed to upload photos' });
   }
-
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'No photos uploaded' });
-  }
-
-  const photoUrls = req.files.map(f => `/uploads/${trackingNumber}/${f.filename}`);
-
-  res.json({
-    success: true,
-    photos: photoUrls,
-    message: `${req.files.length} photo(s) uploaded successfully`
-  });
 });
 
 // DELETE /api/packages/:trackingNumber - Delete package (admin only)
-router.delete('/:trackingNumber', authenticateToken, requireAdmin, (req, res) => {
+router.delete('/:trackingNumber', authenticateToken, requireAdmin, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
-  const result = db.exec('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
-  const pkg = resultToObject(result);
-
-  if (!pkg) {
-    return res.status(404).json({ error: 'Package not found' });
-  }
-
   try {
-    db.run('DELETE FROM timeline_events WHERE tracking_number = ?', [trackingNumber]);
-    db.run('DELETE FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    await db.run('DELETE FROM timeline_events WHERE tracking_number = ?', [trackingNumber]);
+    await db.run('DELETE FROM packages WHERE tracking_number = ?', [trackingNumber]);
     saveDatabase();
 
     res.json({ success: true, message: 'Package deleted' });

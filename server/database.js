@@ -1,33 +1,32 @@
-const initSqlJs = require('sql.js');
+const { createClient } = require('@libsql/client');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
-const path = require('path');
 
-const isTest = process.env.NODE_ENV === 'test';
-const DB_PATH = isTest
-  ? path.join(__dirname, 'test-delivery.db')
-  : path.join(__dirname, 'delivery.db');
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL || 'libsql://maneigbbe-delivery-rayokosag.aws-us-west-2.turso.io',
+  authToken: process.env.TURSO_AUTH_TOKEN
+});
 
-let db = null;
+// Wrapper to match old sql.js interface
+const db = {
+  async run(sql, params = []) {
+    return await client.execute({ sql, args: params });
+  },
+  async exec(sql) {
+    return await client.execute(sql);
+  },
+  async get(sql, params = []) {
+    const result = await client.execute({ sql, args: params });
+    return result.rows[0] || null;
+  },
+  async all(sql, params = []) {
+    const result = await client.execute({ sql, args: params });
+    return result.rows;
+  }
+};
 
 async function initDatabase() {
-  const SQL = await initSqlJs();
-
-  // In test mode, always start fresh
-  if (isTest && fs.existsSync(DB_PATH)) {
-    fs.unlinkSync(DB_PATH);
-  }
-
-  // Load existing database or create new one
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(fileBuffer);
-  } else {
-    db = new SQL.Database();
-  }
-
   // Create tables
-  db.run(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
@@ -36,7 +35,7 @@ async function initDatabase() {
     )
   `);
 
-  db.run(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS packages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tracking_number TEXT UNIQUE NOT NULL,
@@ -64,7 +63,7 @@ async function initDatabase() {
     )
   `);
 
-  db.run(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -76,7 +75,7 @@ async function initDatabase() {
     )
   `);
 
-  db.run(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_id INTEGER NOT NULL,
@@ -87,7 +86,7 @@ async function initDatabase() {
     )
   `);
 
-  db.run(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS timeline_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tracking_number TEXT NOT NULL,
@@ -100,58 +99,41 @@ async function initDatabase() {
   `);
 
   // Create indexes
-  db.run('CREATE INDEX IF NOT EXISTS idx_packages_tracking ON packages(tracking_number)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_packages_customer ON packages(customer_id)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON timeline_events(tracking_number)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)');
-
-  // Migration: add customer_id column if missing (existing databases)
-  try {
-    const cols = db.exec("PRAGMA table_info(packages)");
-    if (cols.length > 0) {
-      const colNames = cols[0].values.map(r => r[1]);
-      if (!colNames.includes('customer_id')) {
-        db.run('ALTER TABLE packages ADD COLUMN customer_id INTEGER');
-      }
-    }
-  } catch (e) {
-    // column already exists or fresh db - ignore
-  }
+  await db.run('CREATE INDEX IF NOT EXISTS idx_packages_tracking ON packages(tracking_number)');
+  await db.run('CREATE INDEX IF NOT EXISTS idx_packages_customer ON packages(customer_id)');
+  await db.run('CREATE INDEX IF NOT EXISTS idx_timeline_tracking ON timeline_events(tracking_number)');
+  await db.run('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)');
 
   // Seed default admin if not exists
-  const adminResult = db.exec("SELECT id FROM admins WHERE username = 'admin'");
-  if (adminResult.length === 0) {
+  const adminResult = await db.get("SELECT id FROM admins WHERE username = ?", ['admin']);
+  if (!adminResult) {
     const hash = bcrypt.hashSync('admin123', 10);
-    db.run('INSERT INTO admins (username, password_hash) VALUES (?, ?)', ['admin', hash]);
+    await db.run('INSERT INTO admins (username, password_hash) VALUES (?, ?)', ['admin', hash]);
     console.log('Default admin created (admin/admin123)');
   }
 
   // Seed demo packages if none exist
-  const countResult = db.exec('SELECT COUNT(*) as count FROM packages');
-  const packageCount = countResult[0]?.values[0][0] || 0;
+  const countResult = await db.get('SELECT COUNT(*) as count FROM packages');
+  const packageCount = countResult?.count || 0;
 
   if (packageCount === 0) {
-    seedDemoData();
+    await seedDemoData();
     console.log('Demo packages seeded');
   }
 
-  saveDatabase();
+  console.log('Database initialized (Turso)');
   return db;
-}
-
-function saveDatabase() {
-  if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
-  }
 }
 
 function getDb() {
   return db;
 }
 
-function seedDemoData() {
+function saveDatabase() {
+  // Not needed for Turso - data auto-saves
+}
+
+async function seedDemoData() {
   const demoPackages = [
     {
       tracking_number: 'MNG123456',
@@ -216,7 +198,7 @@ function seedDemoData() {
   ];
 
   for (const pkg of demoPackages) {
-    db.run(`
+    await db.run(`
       INSERT INTO packages (
         tracking_number, sender_name, sender_phone, sender_address, sender_city, sender_zip,
         recipient_name, recipient_phone, recipient_address, recipient_city, recipient_zip,
@@ -231,14 +213,12 @@ function seedDemoData() {
     // Add timeline events
     const timeline = generateTimeline(pkg);
     for (const event of timeline) {
-      db.run(
+      await db.run(
         'INSERT INTO timeline_events (tracking_number, date, status, location, completed) VALUES (?, ?, ?, ?, ?)',
         [pkg.tracking_number, event.date, event.status, event.location, event.completed ? 1 : 0]
       );
     }
   }
-
-  saveDatabase();
 }
 
 function generateTimeline(pkg) {
