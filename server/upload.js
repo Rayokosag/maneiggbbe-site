@@ -42,6 +42,51 @@ const upload = multer({
   }
 });
 
+// Magic byte signatures for image types
+const MAGIC_BYTES = {
+  'image/jpeg': [Buffer.from([0xFF, 0xD8, 0xFF])],
+  'image/png': [Buffer.from([0x89, 0x50, 0x4E, 0x47])],
+  'image/gif': [Buffer.from('GIF87a'), Buffer.from('GIF89a')],
+  'image/webp': [Buffer.from('RIFF')]
+};
+
+function validateMagicBytes(filePath, mimetype) {
+  const buffer = Buffer.alloc(12);
+  const fd = fs.openSync(filePath, 'r');
+  fs.readSync(fd, buffer, 0, 12, 0);
+  fs.closeSync(fd);
+
+  const signatures = MAGIC_BYTES[mimetype];
+  if (!signatures) return false;
+
+  return signatures.some(sig => {
+    for (let i = 0; i < sig.length; i++) {
+      if (buffer[i] !== sig[i]) return false;
+    }
+    // WebP files also need "WEBP" at offset 8
+    if (mimetype === 'image/webp') {
+      const webpTag = Buffer.from('WEBP');
+      for (let i = 0; i < 4; i++) {
+        if (buffer[8 + i] !== webpTag[i]) return false;
+      }
+    }
+    return true;
+  });
+}
+
+function validateUploadedFiles(req, res, next) {
+  if (!req.files || req.files.length === 0) return next();
+
+  for (const file of req.files) {
+    if (!validateMagicBytes(file.path, file.mimetype)) {
+      // Delete the invalid file
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: `File "${file.originalname}" failed validation: content does not match file type` });
+    }
+  }
+  next();
+}
+
 function getPhotosForPackage(trackingNumber) {
   const pkgDir = path.join(UPLOAD_DIR, trackingNumber);
   if (!fs.existsSync(pkgDir)) return [];
@@ -52,4 +97,4 @@ function getPhotosForPackage(trackingNumber) {
     .map(f => `/uploads/${trackingNumber}/${f}`);
 }
 
-module.exports = { upload, getPhotosForPackage, UPLOAD_DIR };
+module.exports = { upload, validateUploadedFiles, getPhotosForPackage, UPLOAD_DIR };

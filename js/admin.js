@@ -8,7 +8,8 @@ function getAuthHeaders() {
     const token = localStorage.getItem('adminToken');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': token ? `Bearer ${token}` : '',
+        'X-Requested-With': 'XMLHttpRequest'
     };
 }
 
@@ -37,7 +38,7 @@ document.getElementById('logoutBtn').addEventListener('click', async function(e)
     e.preventDefault();
     if (confirm('Are you sure you want to logout?')) {
         try {
-            await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
+            await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         } catch (error) {
             console.error('Logout error:', error);
         }

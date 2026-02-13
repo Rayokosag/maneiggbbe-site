@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { getDb, saveDatabase } = require('../database');
 const { signToken, authenticateToken } = require('../jwt');
@@ -14,6 +15,20 @@ const {
 const { getPassport } = require('../oauth');
 const { sendPasswordReset } = require('../email');
 
+const isTest = process.env.NODE_ENV === 'test';
+
+// Rate limiters for auth routes (disabled in test)
+if (!isTest) {
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Too many attempts, please try again later.' }
+  });
+  router.use('/register', authLimiter);
+  router.use('/login', authLimiter);
+  router.use('/forgot-password', authLimiter);
+}
+
 // POST /api/customers/register
 router.post('/register', validateCustomerRegistration, async (req, res) => {
   const { name, email, password, phone } = req.body;
@@ -22,10 +37,10 @@ router.post('/register', validateCustomerRegistration, async (req, res) => {
   try {
     const existing = await db.get('SELECT id FROM customers WHERE email = ?', [email]);
     if (existing) {
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'Registration failed. Please try again or use a different email.' });
     }
 
-    const hash = bcrypt.hashSync(password, 10);
+    const hash = await bcrypt.hash(password, 10);
     await db.run(
       'INSERT INTO customers (name, email, password_hash, phone) VALUES (?, ?, ?, ?)',
       [name, email, hash, phone || null]
@@ -64,16 +79,16 @@ router.post('/login', async (req, res) => {
     const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
 
     if (!customer) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     if (!customer.password_hash) {
-      return res.status(401).json({ error: 'This account uses Google Sign-In' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const validPassword = bcrypt.compareSync(password, customer.password_hash);
+    const validPassword = await bcrypt.compare(password, customer.password_hash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
@@ -174,12 +189,12 @@ router.put('/password', authenticateToken, validatePasswordChange, async (req, r
       return res.status(400).json({ error: 'This account uses Google Sign-In. Set a password via forgot password.' });
     }
 
-    const validPassword = bcrypt.compareSync(currentPassword, customer.password_hash);
+    const validPassword = await bcrypt.compare(currentPassword, customer.password_hash);
     if (!validPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    const hash = bcrypt.hashSync(newPassword, 10);
+    const hash = await bcrypt.hash(newPassword, 10);
     await db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, req.user.id]);
     saveDatabase();
 
@@ -312,7 +327,7 @@ router.post('/reset-password', validatePasswordReset, async (req, res) => {
       return res.status(400).json({ error: 'Reset token has expired' });
     }
 
-    const hash = bcrypt.hashSync(password, 10);
+    const hash = await bcrypt.hash(password, 10);
     await db.run('UPDATE customers SET password_hash = ? WHERE id = ?', [hash, resetToken.customer_id]);
     await db.run('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [resetToken.id]);
     saveDatabase();

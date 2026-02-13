@@ -9,7 +9,8 @@ function getToken() {
 function getAuthHeaders() {
     return {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
+        'Authorization': `Bearer ${getToken()}`,
+        'X-Requested-With': 'XMLHttpRequest'
     };
 }
 

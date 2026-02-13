@@ -27,6 +27,13 @@ function handleValidationErrors(req, res, next) {
   next();
 }
 
+const passwordValidator = (field = 'password') =>
+  body(field)
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-z]/).withMessage('Password must contain at least 1 lowercase letter')
+    .matches(/[A-Z]/).withMessage('Password must contain at least 1 uppercase letter')
+    .matches(/\d/).withMessage('Password must contain at least 1 digit');
+
 const validateLogin = [
   body('username').trim().notEmpty().withMessage('Username is required'),
   body('password').notEmpty().withMessage('Password is required'),
@@ -49,10 +56,41 @@ const validatePackage = [
   handleValidationErrors
 ];
 
+const VALID_STATUSES = ['Pending Pickup', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
+
+const validatePackageStatus = [
+  body('status').isIn(VALID_STATUSES).withMessage('Invalid status value'),
+  handleValidationErrors
+];
+
+const validatePackageUpdate = [
+  body('sender_name').optional().trim().notEmpty().withMessage('Sender name cannot be empty'),
+  body('sender_phone').optional().trim().notEmpty().withMessage('Sender phone cannot be empty'),
+  body('sender_address').optional().trim().notEmpty().withMessage('Sender address cannot be empty'),
+  body('sender_city').optional().trim().notEmpty().withMessage('Sender city cannot be empty'),
+  body('sender_zip').optional().trim().notEmpty().withMessage('Sender ZIP cannot be empty'),
+  body('recipient_name').optional().trim().notEmpty().withMessage('Recipient name cannot be empty'),
+  body('recipient_phone').optional().trim().notEmpty().withMessage('Recipient phone cannot be empty'),
+  body('recipient_address').optional().trim().notEmpty().withMessage('Recipient address cannot be empty'),
+  body('recipient_city').optional().trim().notEmpty().withMessage('Recipient city cannot be empty'),
+  body('recipient_zip').optional().trim().notEmpty().withMessage('Recipient ZIP cannot be empty'),
+  body('weight').optional().isFloat({ min: 0.1 }).withMessage('Weight must be at least 0.1 lbs'),
+  body('speed').optional().isIn(['standard', 'express', 'overnight']).withMessage('Invalid delivery speed'),
+  handleValidationErrors
+];
+
+const validateDistanceCalc = [
+  body('from').trim().notEmpty().withMessage('"from" postal code is required'),
+  body('to').trim().notEmpty().withMessage('"to" postal code is required'),
+  body('weight').isFloat({ gt: 0 }).withMessage('Weight must be greater than 0'),
+  body('speed').optional().isIn(['standard', 'express', 'overnight']).withMessage('Invalid delivery speed'),
+  handleValidationErrors
+];
+
 const validateCustomerRegistration = [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  passwordValidator('password'),
   body('phone').optional().trim(),
   handleValidationErrors
 ];
@@ -66,13 +104,13 @@ const validateProfileUpdate = [
 
 const validatePasswordChange = [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+  passwordValidator('newPassword'),
   handleValidationErrors
 ];
 
 const validatePasswordReset = [
   body('token').notEmpty().withMessage('Reset token is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  passwordValidator('password'),
   handleValidationErrors
 ];
 
@@ -87,6 +125,9 @@ module.exports = {
   handleValidationErrors,
   validateLogin,
   validatePackage,
+  validatePackageStatus,
+  validatePackageUpdate,
+  validateDistanceCalc,
   validateCustomerRegistration,
   validateProfileUpdate,
   validatePasswordChange,

@@ -11,13 +11,38 @@ const { initDatabase } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isTest = process.env.NODE_ENV === 'test';
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Require SESSION_SECRET in production
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET environment variable is required in production');
+}
 
 // Trust proxy (required for Koyeb/cloud deployments)
 app.set('trust proxy', 1);
 
-// Security middleware
+// HTTPS redirect (behind reverse proxy)
+if (isProduction) {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
+// Security middleware with HSTS and CSP
 app.use(helmet({
-  contentSecurityPolicy: false,
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"]
+    }
+  },
   crossOriginEmbedderPolicy: false
 }));
 
@@ -31,16 +56,35 @@ if (!isTest) {
   app.use('/api/', limiter);
 }
 
-// Middleware
-app.use(cors());
+// CORS with origin whitelist
+app.use(cors({
+  origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:3000'],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'maneigbbe-session-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { secure: true, sameSite: 'strict', maxAge: 24 * 60 * 60 * 1000 }
 }));
+
+// CSRF protection for state-changing requests
+app.use((req, res, next) => {
+  const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+  if (safeMethods.includes(req.method)) return next();
+
+  // Skip for multipart/form-data (file uploads)
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.startsWith('multipart/form-data')) return next();
+
+  if (req.headers['x-requested-with'] !== 'XMLHttpRequest') {
+    return res.status(403).json({ error: 'CSRF validation failed' });
+  }
+  next();
+});
 
 // Serve static files from parent directory (the frontend)
 app.use(express.static(path.join(__dirname, '..')));
@@ -74,7 +118,7 @@ async function start() {
     app.use((err, req, res, next) => {
       console.error(err.stack);
       res.status(err.status || 500).json({
-        error: process.env.NODE_ENV === 'production'
+        error: isProduction
           ? 'Something went wrong!'
           : err.message || 'Something went wrong!'
       });

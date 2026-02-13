@@ -439,7 +439,7 @@
             try {
                 var response = await fetch('/api/customers/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     body: JSON.stringify({
                         email: emailInput.value,
                         password: passwordInput.value

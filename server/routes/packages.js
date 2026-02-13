@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { getDb, saveDatabase } = require('../database');
 const { sendPickupConfirmation, sendStatusUpdate } = require('../email');
-const { upload, getPhotosForPackage } = require('../upload');
+const { upload, validateUploadedFiles, getPhotosForPackage } = require('../upload');
 const { authenticateToken, verifyToken } = require('../jwt');
 const { requireAdmin } = require('../roles');
+const { validatePackage, validatePackageStatus, validatePackageUpdate } = require('../validation');
 
 // Helper to format package with timeline and photos
 async function formatPackage(pkg) {
@@ -143,7 +144,7 @@ router.get('/:trackingNumber', async (req, res) => {
 });
 
 // POST /api/packages - Create new package
-router.post('/', async (req, res) => {
+router.post('/', validatePackage, async (req, res) => {
   const { sender, recipient, package: pkgInfo, price, expectedDelivery } = req.body;
   const db = getDb();
 
@@ -219,7 +220,7 @@ router.post('/', async (req, res) => {
 });
 
 // PATCH /api/packages/:trackingNumber - Partial update (admin only)
-router.patch('/:trackingNumber', authenticateToken, requireAdmin, async (req, res) => {
+router.patch('/:trackingNumber', authenticateToken, requireAdmin, validatePackageUpdate, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
@@ -268,7 +269,7 @@ router.patch('/:trackingNumber', authenticateToken, requireAdmin, async (req, re
 });
 
 // PUT /api/packages/:trackingNumber - Update package status (admin only)
-router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/:trackingNumber', authenticateToken, requireAdmin, validatePackageStatus, async (req, res) => {
   const { trackingNumber } = req.params;
   const { status, location } = req.body;
   const db = getDb();
@@ -321,7 +322,7 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, async (req, res)
 });
 
 // POST /api/packages/:trackingNumber/photos - Upload package photos
-router.post('/:trackingNumber/photos', upload.array('photos', 5), async (req, res) => {
+router.post('/:trackingNumber/photos', upload.array('photos', 5), validateUploadedFiles, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 

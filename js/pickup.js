@@ -102,7 +102,7 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
     };
 
     // Build headers - include customer auth if logged in
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     const customerToken = localStorage.getItem('customerToken');
     if (customerToken) {
         headers['Authorization'] = `Bearer ${customerToken}`;

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { lookupPostalCode, calculateDistance, calculatePrice } = require('../distance');
+const { validateDistanceCalc } = require('../validation');
 
 // GET /api/distance?from=V6B&to=V5K
 router.get('/', (req, res) => {
@@ -29,16 +30,8 @@ router.get('/zip/:zip', (req, res) => {
 });
 
 // POST /api/distance/calculate-price
-router.post('/calculate-price', (req, res) => {
+router.post('/calculate-price', validateDistanceCalc, (req, res) => {
   const { from, to, weight, speed } = req.body;
-
-  if (!from || !to) {
-    return res.status(400).json({ error: 'Both "from" and "to" postal codes are required' });
-  }
-
-  if (!weight || weight <= 0) {
-    return res.status(400).json({ error: 'Valid weight is required' });
-  }
 
   const distResult = calculateDistance(from, to);
   if (!distResult) {

@@ -33,9 +33,19 @@ async function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      totp_secret TEXT,
+      totp_enabled INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Add TOTP columns if they don't exist (migration for existing databases)
+  try {
+    await db.run('ALTER TABLE admins ADD COLUMN totp_secret TEXT');
+  } catch (e) { /* column already exists */ }
+  try {
+    await db.run('ALTER TABLE admins ADD COLUMN totp_enabled INTEGER DEFAULT 0');
+  } catch (e) { /* column already exists */ }
 
   await db.run(`
     CREATE TABLE IF NOT EXISTS packages (
@@ -103,7 +113,7 @@ async function initDatabase() {
   // Seed default admin if not exists
   const adminResult = await db.get("SELECT id FROM admins WHERE username = ?", ['admin']);
   if (!adminResult) {
-    const hash = bcrypt.hashSync('admin123', 10);
+    const hash = await bcrypt.hash('admin123', 10);
     await db.run('INSERT INTO admins (username, password_hash) VALUES (?, ?)', ['admin', hash]);
     console.log('Default admin created (admin/admin123)');
   }
