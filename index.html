@@ -16,14 +16,37 @@
                     <span>Maneigbbe</span>
                 </a>
             </div>
-            <ul class="nav-links" id="mainNav">
-                <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="tracking.html">Track Package</a></li>
-                <li><a href="request-pickup.html">Request Pickup</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li id="navLoginItem"><a href="customer-login.html">Login</a></li>
-                <li id="navDashboardItem" style="display:none;"><a href="customer-dashboard.html">Dashboard</a></li>
-            </ul>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <div class="nav-menu" id="navMenu">
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tracking.html">Track Package</a></li>
+                    <li><a href="request-pickup.html">Request Pickup</a></li>
+                </ul>
+                <a href="customer-login.html" class="nav-login-btn" id="navLoginBtn">Login</a>
+                <div class="nav-profile" id="navProfile" style="display:none;">
+                    <button class="profile-toggle" id="profileToggle">
+                        <svg class="profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </button>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="profile-dropdown-header">
+                            <span class="profile-dropdown-name" id="profileDropdownName">Customer</span>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="customer-dashboard.html" class="profile-dropdown-item">Dashboard</a>
+                        <a href="customer-dashboard.html#profile" class="profile-dropdown-item">Profile</a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item profile-dropdown-logout" id="navLogoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -329,11 +352,6 @@
     </footer>
 
     <script src="js/main.js"></script>
-    <script>
-        if (localStorage.getItem('customerToken')) {
-            document.getElementById('navLoginItem').style.display = 'none';
-            document.getElementById('navDashboardItem').style.display = '';
-        }
-    </script>
+    <script src="js/navbar.js"></script>
 </body>
 </html>

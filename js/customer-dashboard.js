@@ -36,14 +36,26 @@ async function init() {
 }
 
 // Tab navigation
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+    var btn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+    if (btn) btn.classList.add('active');
+    var content = document.getElementById('tab-' + tabName);
+    if (content) content.classList.add('active');
+}
+
 document.querySelectorAll('.tab-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        switchTab(btn.dataset.tab);
     });
 });
+
+// Hash-based tab switching (e.g. #profile from navbar dropdown)
+var hash = window.location.hash.replace('#', '');
+if (hash && document.getElementById('tab-' + hash)) {
+    switchTab(hash);
+}
 
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', function() {
