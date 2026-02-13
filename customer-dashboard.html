@@ -258,6 +258,10 @@
             <button class="tab-btn active" data-tab="packages">My Packages</button>
             <button class="tab-btn" data-tab="profile">Profile</button>
             <button class="tab-btn" data-tab="password">Change Password</button>
+            <button class="tab-btn" data-tab="bulk-upload">Bulk Upload</button>
+            <button class="tab-btn" data-tab="invoices">Invoices</button>
+            <button class="tab-btn" data-tab="reports">Reports</button>
+            <button class="tab-btn" data-tab="contact-manager">Contact Manager</button>
         </div>
 
         <!-- Packages Tab -->
@@ -325,6 +329,63 @@
                     </div>
                     <button type="submit" class="btn-save">Update Password</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Bulk Upload Tab -->
+        <div id="tab-bulk-upload" class="tab-content">
+            <div class="profile-form">
+                <h3>Bulk Upload Shipments</h3>
+                <p style="color: #ccc; margin-bottom: 1rem;">Upload a CSV file to create multiple shipments at once.</p>
+                <form id="bulkUploadForm">
+                    <div class="form-group">
+                        <label for="csvFile">Select CSV File</label>
+                        <input type="file" id="csvFile" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn-save">Upload CSV</button>
+                </form>
+                <p style="color: #666; margin-top: 1.5rem;">
+                    <a href="#" style="color: #90caf9; text-decoration: none;">Download CSV Template</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Invoices Tab -->
+        <div id="tab-invoices" class="tab-content">
+            <div class="profile-form">
+                <h3>Invoice Downloads</h3>
+                <p style="color: #ccc; margin-bottom: 1rem;">Download your monthly and yearly invoices.</p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Invoice_2024_01.pdf</a> (Jan 2024)</li>
+                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Invoice_2023_12.pdf</a> (Dec 2023)</li>
+                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Invoice_2023_Full_Year.pdf</a> (2023 Annual)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="tab-reports" class="tab-content">
+            <div class="profile-form">
+                <h3>Billing Reports</h3>
+                <p style="color: #ccc; margin-bottom: 1rem;">View detailed reports on your spending and shipping patterns.</p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Monthly Spending Report (Q1 2024)</a></li>
+                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Shipment Volume by Destination (2023)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Contact Manager Tab -->
+        <div id="tab-contact-manager" class="tab-content">
+            <div class="profile-form">
+                <h3>Account Manager</h3>
+                <p style="color: #ccc; margin-bottom: 1rem;">Your dedicated account manager is here to help.</p>
+                <div style="margin-bottom: 1rem;">
+                    <p style="font-weight: bold; color: #fff;">Name: John Smith</p>
+                    <p style="color: #ccc;">Email: john.smith@maneigbbe.com</p>
+                    <p style="color: #ccc;">Phone: +1 (555) 123-4567</p>
+                </div>
+                <button class="btn-save">Message Account Manager</button>
             </div>
         </div>
     </section>

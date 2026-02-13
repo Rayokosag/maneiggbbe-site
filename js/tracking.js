@@ -25,12 +25,19 @@ async function trackPackage(trackingNumber) {
     document.getElementById('trackingResults').style.display = 'none';
     document.getElementById('errorMessage').style.display = 'none';
 
+    // Client-side validation for tracking number format
+    const trackingRegex = /^MNG\d{6}$/; // Example: MNG123456
+    if (!trackingRegex.test(trackingNumber)) {
+        displayError('Invalid tracking number format. Please use MNG followed by 6 digits (e.g., MNG123456).');
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/packages/${trackingNumber}`);
 
         if (!response.ok) {
             if (response.status === 404) {
-                displayError();
+                displayError('Tracking number not found. Please check and try again.');
                 return;
             }
             throw new Error('Failed to fetch package');
@@ -41,7 +48,7 @@ async function trackPackage(trackingNumber) {
 
     } catch (error) {
         console.error('Error tracking package:', error);
-        displayError();
+        displayError('An error occurred while tracking your package. Please try again later.');
     }
 }
 
@@ -106,6 +113,8 @@ function displayTrackingResults(data) {
     document.getElementById('trackingResults').style.display = 'block';
 }
 
-function displayError() {
-    document.getElementById('errorMessage').style.display = 'block';
+function displayError(message = 'Tracking number not found. Please check and try again.') {
+    const errorMessageDiv = document.getElementById('errorMessage');
+    errorMessageDiv.querySelector('p').textContent = message;
+    errorMessageDiv.style.display = 'block';
 }

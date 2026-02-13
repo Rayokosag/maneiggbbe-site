@@ -211,3 +211,22 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
         msg.style.display = 'block';
     }
 });
+
+// Bulk Upload Form
+document.getElementById('bulkUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const csvFile = document.getElementById('csvFile').files[0];
+    if (csvFile) {
+        alert(`Simulating CSV upload for file: ${csvFile.name}. This would typically be sent to a backend API.`);
+        console.log('Bulk upload file:', csvFile);
+        // In a real application, you would send this file to a backend API
+    } else {
+        alert('Please select a CSV file to upload.');
+    }
+});
+
+// Message Account Manager Button
+document.querySelector('#tab-contact-manager .btn-save').addEventListener('click', function() {
+    alert('Simulating sending a message to your Account Manager. This would typically open a chat or email client.');
+    console.log('Message Account Manager clicked.');
+});
