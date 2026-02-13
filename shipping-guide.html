@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Guide - Maneigbbe Logistics</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Specific styles for Shipping Guide page */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--white);
+            padding: 4rem 0;
+            text-align: center;
+        }
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .guide-section {
+            padding: 4rem 0;
+            background-color: var(--bg-light);
+        }
+        .guide-section:nth-of-type(odd) {
+            background-color: var(--white);
+        }
+        .guide-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+        }
+        .guide-content h2 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .guide-content h3 {
+            font-size: 1.8rem;
+            color: var(--secondary-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 0.5rem;
+        }
+        .guide-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+        .guide-content ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        .guide-content ul li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+        .guide-content ul li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .guide-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            gap: 1.5rem;
+        }
+        .guide-step-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            flex-shrink: 0;
+            width: 50px;
+            text-align: right;
+        }
+        .guide-step-description h4 {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        .guide-step-description p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation (Copied from index.html, simplified for guide) -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
+                    <span>Maneigbbe</span>
+                </a>
+            </div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <div class="nav-menu" id="navMenu">
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tracking.html">Track Package</a></li>
+                    <li><a href="request-pickup.html">Request Pickup</a></li>
+                </ul>
+                <a href="customer-login.html" class="nav-login-btn" id="navLoginBtn">Login</a>
+                <div class="nav-profile" id="navProfile" style="display:none;">
+                    <button class="profile-toggle" id="profileToggle">
+                        <svg class="profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </button>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="profile-dropdown-header">
+                            <span class="profile-dropdown-name" id="profileDropdownName">Customer</span>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="customer-dashboard.html" class="profile-dropdown-item">Dashboard</a>
+                        <a href="customer-dashboard.html#profile" class="profile-dropdown-item">Profile</a>
+                        <div class="profile-dropdown-divider"></div>
+                        <button class="profile-dropdown-item profile-dropdown-logout" id="navLogoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container">
+            <h1>Maneigbbe Comprehensive Shipping Guide</h1>
+            <p style="font-size: 1.2rem; opacity: 0.9;">Your essential resource for efficient and compliant logistics operations.</p>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <div class="container">
+            <div class="guide-content">
+                <h2>Understanding Our Logistics Workflow</h2>
+                <p>
+                    At Maneigbbe, we are committed to providing a seamless and transparent logistics experience. Our advanced operational framework ensures that every consignment is handled with precision, from initiation to final delivery. This guide outlines our structured process, empowering you with the knowledge to optimize your shipping endeavors.
+                </p>
+
+                <h3>How Our Shipping Process Works</h3>
+                <div class="guide-step">
+                    <div class="guide-step-number">1</div>
+                    <div class="guide-step-description">
+                        <h4>Initiate Shipment Request</h4>
+                        <p>Begin by submitting your detailed shipping requirements through our intuitive Client Portal or directly via our Request Pickup form. Provide essential information such as sender/recipient details, package specifications (weight, dimensions), and preferred service level (Standard, Expedited, Premium Overnight). Our system will generate an immediate service estimation and preliminary cost analysis.</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-number">2</div>
+                    <div class="guide-step-description">
+                        <h4>Precision Collection & Tracking Allocation</h4>
+                        <p>Upon confirmation, our dedicated logistics team dispatches personnel for timely package collection at your designated location. Each consignment is meticulously processed and assigned a unique, immutable tracking number. This identifier is your key to real-time shipment visibility throughout its entire journey.</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-number">3</div>
+                    <div class="guide-step-description">
+                        <h4>Advanced Transit & Monitoring</h4>
+                        <p>Your package enters our optimized transit network. Leveraging advanced GPS and telemetry, we continuously monitor its progress, ensuring adherence to scheduled routes and timelines. Any deviations or significant updates are immediately logged and reflected in your tracking timeline, ensuring proactive management.</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-number">4</div>
+                    <div class="guide-step-description">
+                        <h4>Secure Delivery & Verified Proof of Receipt</h4>
+                        <p>The final stage involves secure delivery to the recipient. Our protocols include stringent verification processes, such as signature confirmation and photographic proof of delivery, ensuring the integrity of the chain of custody. Upon successful delivery, a comprehensive status update is provided, concluding the logistics cycle.</p>
+                    </div>
+                </div>
+
+                <h3>How to Request a Pickup</h3>
+                <p>
+                    Requesting a pickup with Maneigbbe is designed for maximum efficiency, ensuring your operational flow remains uninterrupted. Follow these steps to schedule a collection:
+                </p>
+                <ul>
+                    <li>Navigate to the <a href="request-pickup.html" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">"Request Pickup" page</a> on our website.</li>
+                    <li>Complete the sender and recipient information fields with accurate and complete details.</li>
+                    <li>Provide precise package dimensions and weight to ensure accurate pricing and appropriate handling.</li>
+                    <li>Select your desired service level (Standard, Expedited, Premium Overnight) based on your urgency requirements.</li>
+                    <li>Review the estimated cost and confirm your request.</li>
+                    <li>Upon submission, a unique tracking number will be generated and provided, allowing you to monitor your shipment immediately.</li>
+                </ul>
+                <p>
+                    For bulk pickup requests or recurring logistics partnerships, please utilize the dedicated features within your <a href="customer-dashboard.html" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Client Portal Dashboard</a> or contact your Account Manager for tailored solutions.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (Copied from index.html) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Maneigbbe</h3>
+                    <p>Fast, reliable delivery service you can trust.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="tracking.html">Track Package</a></li>
+                        <li><a href="request-pickup.html">Request Pickup</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support Resources</h4>
+                    <ul>
+                        <li><a href="#help-center">Help Center</a></li>
+                        <li><a href="shipping-guide.html">Shipping Guide</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>Tel: 1-800-MANEIGBBE</p>
+                    <p>Email: support@maneigbbe.com</p>
+                    <p>24/7 Customer Service</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/navbar.js"></script>
+</body>
+</html>
