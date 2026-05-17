@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-WORKDIR /app/server
+WORKDIR /app/backend
 RUN npm install --production
 
 # Expose port

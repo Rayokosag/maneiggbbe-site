@@ -37,7 +37,7 @@ async function sendPickupConfirmation({ to, trackingNumber, senderName, recipien
   try {
     const transport = await initTransporter();
     const info = await transport.sendMail({
-      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneigbbe.com>',
+      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneiggbbe.com>',
       to,
       subject: `Pickup Confirmed - Tracking #${trackingNumber}`,
       html: `
@@ -78,7 +78,7 @@ async function sendStatusUpdate({ to, trackingNumber, status, recipientName }) {
   try {
     const transport = await initTransporter();
     const info = await transport.sendMail({
-      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneigbbe.com>',
+      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneiggbbe.com>',
       to,
       subject: `Package Update - ${status} - Tracking #${trackingNumber}`,
       html: `
@@ -119,7 +119,7 @@ async function sendPasswordReset({ to, name, token }) {
     const transport = await initTransporter();
     const resetUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/reset-password.html?token=${token}`;
     const info = await transport.sendMail({
-      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneigbbe.com>',
+      from: process.env.SMTP_FROM || '"Maneigbbe Delivery" <noreply@maneiggbbe.com>',
       to,
       subject: 'Password Reset - Maneigbbe Delivery',
       html: `

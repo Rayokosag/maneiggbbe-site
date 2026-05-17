@@ -65,7 +65,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'maneigbbe-session-secret',
+  secret: process.env.SESSION_SECRET || 'maneiggbbe-session-secret',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: true, sameSite: 'strict', maxAge: 24 * 60 * 60 * 1000 }
@@ -86,8 +86,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from parent directory (the frontend)
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static files from frontend directory
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -111,7 +111,7 @@ async function start() {
 
     // Serve index.html for root
     app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, '..', 'index.html'));
+      res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
     });
 
     // Error handling middleware
