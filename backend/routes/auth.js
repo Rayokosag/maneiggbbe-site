@@ -195,6 +195,35 @@ router.post('/2fa/disable', authenticateToken, async (req, res) => {
   }
 });
 
+// PUT /api/auth/password - Change admin password
+router.put('/password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new password are required' });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters' });
+  }
+
+  try {
+    const db = getDb();
+    const admin = await db.get('SELECT * FROM admins WHERE id = ?', [req.user.id]);
+    if (!admin) return res.status(404).json({ error: 'Admin not found' });
+
+    const valid = await bcrypt.compare(currentPassword, admin.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.run('UPDATE admins SET password_hash = ? WHERE id = ?', [hash, admin.id]);
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
   res.json({ success: true });

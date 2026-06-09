@@ -259,6 +259,70 @@ document.getElementById('refreshBtn').addEventListener('click', function() {
     });
 });
 
+// ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+document.getElementById('changePwBtn').addEventListener('click', function() {
+    document.getElementById('cpCurrent').value = '';
+    document.getElementById('cpNew').value = '';
+    document.getElementById('cpConfirm').value = '';
+    const msg = document.getElementById('changePwMsg');
+    msg.style.display = 'none';
+    document.getElementById('changePwModal').classList.add('open');
+    setTimeout(() => document.getElementById('cpCurrent').focus(), 100);
+});
+
+document.getElementById('cancelChangePw').addEventListener('click', function() {
+    document.getElementById('changePwModal').classList.remove('open');
+});
+
+document.getElementById('changePwModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+});
+
+document.getElementById('submitChangePw').addEventListener('click', async function() {
+    const current = document.getElementById('cpCurrent').value;
+    const newPw   = document.getElementById('cpNew').value;
+    const confirm = document.getElementById('cpConfirm').value;
+    const msg     = document.getElementById('changePwMsg');
+
+    msg.style.display = 'none';
+
+    if (!current || !newPw || !confirm) {
+        showPwMsg('All fields are required', 'error'); return;
+    }
+    if (newPw.length < 8) {
+        showPwMsg('New password must be at least 8 characters', 'error'); return;
+    }
+    if (newPw !== confirm) {
+        showPwMsg('New passwords do not match', 'error'); return;
+    }
+
+    try {
+        const res = await fetch(`${API}/auth/password`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            document.getElementById('changePwModal').classList.remove('open');
+            toast('Password changed successfully', 'success');
+        } else {
+            showPwMsg(data.error || 'Failed to change password', 'error');
+        }
+    } catch {
+        showPwMsg('Connection error. Please try again.', 'error');
+    }
+});
+
+function showPwMsg(text, type) {
+    const msg = document.getElementById('changePwMsg');
+    msg.textContent = text;
+    msg.style.background = type === 'error' ? '#3a1a1a' : '#1a3a1a';
+    msg.style.color       = type === 'error' ? '#ef5350' : '#66bb6a';
+    msg.style.border      = '1px solid ' + (type === 'error' ? '#5a2a2a' : '#2a5a2a');
+    msg.style.display     = 'block';
+}
+
 // ── LOGOUT ────────────────────────────────────────────────────────────────────
 document.getElementById('logoutBtn').addEventListener('click', async function() {
     try {

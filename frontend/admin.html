@@ -58,6 +58,17 @@
             transition: color 0.2s;
         }
         .nav-link:hover { color: #fff; }
+        .btn-change-pw {
+            background: none;
+            border: 1px solid #333;
+            color: #888;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-change-pw:hover { color: #fff; border-color: #666; }
         .btn-logout {
             background: none;
             border: 1px solid #333;
@@ -467,7 +478,8 @@
         </a>
         <div class="nav-right">
             <a href="index.html" class="nav-link" target="_blank">View Site ↗</a>
-            <button class="btn-logout" id="logoutBtn">Logout</button>
+            <button class="btn-change-pw" id="changePwBtn">Change Password</button>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
         </div>
     </nav>
 
@@ -642,6 +654,30 @@
             <div class="confirm-actions">
                 <button class="btn-cancel-confirm" id="cancelDelete">Cancel</button>
                 <button class="btn-confirm-delete" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div class="modal-overlay" id="changePwModal">
+        <div class="confirm-box" style="max-width:420px; text-align:left;">
+            <h3 style="margin-bottom:1.25rem;">Change Password</h3>
+            <div id="changePwMsg" class="form-message" style="display:none; margin-bottom:1rem; padding:0.65rem 1rem; border-radius:8px; font-size:0.9rem;"></div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label>Current Password</label>
+                <input type="password" id="cpCurrent" style="width:100%;padding:0.6rem 0.85rem;background:#111;border:1px solid #333;border-radius:8px;color:#e0e0e0;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label>New Password</label>
+                <input type="password" id="cpNew" style="width:100%;padding:0.6rem 0.85rem;background:#111;border:1px solid #333;border-radius:8px;color:#e0e0e0;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label>Confirm New Password</label>
+                <input type="password" id="cpConfirm" style="width:100%;padding:0.6rem 0.85rem;background:#111;border:1px solid #333;border-radius:8px;color:#e0e0e0;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-cancel-confirm" id="cancelChangePw">Cancel</button>
+                <button class="btn-submit" id="submitChangePw">Save Password</button>
             </div>
         </div>
     </div>
