@@ -13,7 +13,7 @@ const {
   validateForgotPassword
 } = require('../validation');
 const { getPassport } = require('../oauth');
-const { sendPasswordReset } = require('../email');
+const { sendPasswordReset, sendOTPEmail } = require('../email');
 
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -35,34 +35,99 @@ router.post('/register', validateCustomerRegistration, async (req, res) => {
   const db = getDb();
 
   try {
-    const existing = await db.get('SELECT id FROM customers WHERE email = ?', [email]);
+    const existing = await db.get('SELECT id, email_verified FROM customers WHERE email = ?', [email]);
     if (existing) {
+      // If unverified account exists, resend OTP instead of erroring
+      if (!existing.email_verified) {
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        await db.run('DELETE FROM email_verification_tokens WHERE customer_id = ?', [existing.id]);
+        await db.run('INSERT INTO email_verification_tokens (customer_id, code, expires_at) VALUES (?, ?, ?)', [existing.id, code, expiresAt]);
+        sendOTPEmail({ to: email, name, code }).catch(err => console.error('OTP email error:', err));
+        return res.status(200).json({ pendingVerification: true, email });
+      }
       return res.status(409).json({ error: 'Registration failed. Please try again or use a different email.' });
     }
 
     const hash = await bcrypt.hash(password, 10);
     await db.run(
-      'INSERT INTO customers (name, email, password_hash, phone) VALUES (?, ?, ?, ?)',
+      'INSERT INTO customers (name, email, password_hash, phone, email_verified) VALUES (?, ?, ?, ?, 0)',
       [name, email, hash, phone || null]
     );
     saveDatabase();
 
     const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
-    const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await db.run('INSERT INTO email_verification_tokens (customer_id, code, expires_at) VALUES (?, ?, ?)', [customer.id, code, expiresAt]);
 
-    res.status(201).json({
-      success: true,
-      token,
-      customer: {
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone
-      }
-    });
+    sendOTPEmail({ to: email, name, code }).catch(err => console.error('OTP email error:', err));
+
+    res.status(201).json({ pendingVerification: true, email });
   } catch (error) {
     console.error('Error registering customer:', error);
     res.status(500).json({ error: 'Failed to register' });
+  }
+});
+
+// POST /api/customers/verify-email
+router.post('/verify-email', async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+  const db = getDb();
+  try {
+    const customer = await db.get('SELECT * FROM customers WHERE email = ?', [email]);
+    if (!customer) return res.status(400).json({ error: 'Invalid verification request' });
+
+    const token = await db.get(
+      'SELECT * FROM email_verification_tokens WHERE customer_id = ? AND used = 0 ORDER BY id DESC LIMIT 1',
+      [customer.id]
+    );
+
+    if (!token || token.code !== String(code)) {
+      return res.status(400).json({ error: 'Invalid or expired code' });
+    }
+    if (new Date(token.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Code has expired. Please request a new one.' });
+    }
+
+    await db.run('UPDATE customers SET email_verified = 1 WHERE id = ?', [customer.id]);
+    await db.run('UPDATE email_verification_tokens SET used = 1 WHERE id = ?', [token.id]);
+    saveDatabase();
+
+    const authToken = signToken({ id: customer.id, email: customer.email, role: 'customer' });
+    res.json({
+      success: true,
+      token: authToken,
+      customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone }
+    });
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// POST /api/customers/resend-otp
+router.post('/resend-otp', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  const db = getDb();
+  try {
+    const customer = await db.get('SELECT * FROM customers WHERE email = ? AND email_verified = 0', [email]);
+    if (!customer) return res.status(400).json({ error: 'No pending verification for this email' });
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await db.run('DELETE FROM email_verification_tokens WHERE customer_id = ?', [customer.id]);
+    await db.run('INSERT INTO email_verification_tokens (customer_id, code, expires_at) VALUES (?, ?, ?)', [customer.id, code, expiresAt]);
+
+    sendOTPEmail({ to: email, name: customer.name, code }).catch(err => console.error('OTP email error:', err));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error resending OTP:', error);
+    res.status(500).json({ error: 'Failed to resend code' });
   }
 });
 
@@ -89,6 +154,10 @@ router.post('/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, customer.password_hash);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    if (!customer.email_verified) {
+      return res.status(403).json({ error: 'Please verify your email before logging in.', pendingVerification: true, email });
     }
 
     const token = signToken({ id: customer.id, email: customer.email, role: 'customer' });

@@ -486,6 +486,8 @@
                     localStorage.setItem('customerToken', data.token);
                     localStorage.setItem('customerName', data.customer.name);
                     window.location.href = 'customer-dashboard.html';
+                } else if (data.pendingVerification) {
+                    window.location.href = 'register.html?verify=' + encodeURIComponent(data.email);
                 } else {
                     triggerPanic();
                     errorMsg.textContent = data.error || 'Login failed';

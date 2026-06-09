@@ -202,6 +202,26 @@
 
             <div id="errorMessage" class="register-error" style="display: none;"></div>
 
+            <!-- OTP Verification Step (hidden until after form submit) -->
+            <div id="otpStep" style="display:none;">
+                <div style="text-align:center; margin-bottom:1.5rem;">
+                    <div style="font-size:2.5rem; margin-bottom:0.5rem;">📧</div>
+                    <h3 style="color:#333; margin-bottom:0.4rem;">Check your email</h3>
+                    <p style="color:#666; font-size:0.9rem;">We sent a 6-digit code to <strong id="otpEmailDisplay"></strong></p>
+                </div>
+                <div id="otpError" class="register-error" style="display:none;"></div>
+                <div class="form-group">
+                    <label for="otpCode">Verification Code</label>
+                    <input type="text" id="otpCode" placeholder="123456" maxlength="6" inputmode="numeric"
+                           style="font-size:1.5rem; letter-spacing:8px; text-align:center; font-weight:700;">
+                </div>
+                <button type="button" id="verifyOtpBtn" class="btn-register">Verify Email</button>
+                <p style="text-align:center; margin-top:1rem; font-size:0.85rem; color:#888;">
+                    Didn't receive it? <a href="#" id="resendOtpBtn" style="color:#667eea;">Resend code</a>
+                </p>
+            </div>
+
+            <div id="registerMainContent">
             <button class="btn-google" onclick="googleSignUp()">
                 <svg class="google-icon" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -247,6 +267,7 @@
             <div class="register-links">
                 <p>Already have an account? <a href="customer-login.html">Sign In</a></p>
             </div>
+            </div><!-- end registerMainContent -->
         </div>
     </section>
 
@@ -317,6 +338,22 @@
             window.location.href = '/api/customers/auth/google?from=register.html';
         }
 
+        let pendingEmail = '';
+
+        // If redirected from login with unverified email
+        const urlParams = new URLSearchParams(window.location.search);
+        const verifyParam = urlParams.get('verify');
+        if (verifyParam) showOtpStep(verifyParam);
+
+        function showOtpStep(email) {
+            pendingEmail = email;
+            document.getElementById('registerMainContent').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('otpEmailDisplay').textContent = email;
+            document.getElementById('otpStep').style.display = 'block';
+            document.getElementById('otpCode').focus();
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const errorMsg = document.getElementById('errorMessage');
@@ -330,6 +367,10 @@
                 errorMsg.style.display = 'block';
                 return;
             }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending code...';
 
             try {
                 const response = await fetch('/api/customers/register', {
@@ -345,10 +386,8 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    localStorage.setItem('customerToken', data.token);
-                    localStorage.setItem('customerName', data.customer.name);
-                    window.location.href = 'customer-dashboard.html';
+                if (response.ok && data.pendingVerification) {
+                    showOtpStep(data.email);
                 } else {
                     errorMsg.textContent = data.error || data.errors?.[0]?.msg || 'Registration failed';
                     errorMsg.style.display = 'block';
@@ -356,6 +395,69 @@
             } catch (error) {
                 errorMsg.textContent = 'Connection error. Please try again.';
                 errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+
+        document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+            const code = document.getElementById('otpCode').value.trim();
+            const otpError = document.getElementById('otpError');
+            otpError.style.display = 'none';
+
+            if (!code || code.length !== 6) {
+                otpError.textContent = 'Please enter the 6-digit code';
+                otpError.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch('/api/customers/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ email: pendingEmail, code })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('customerToken', data.token);
+                    localStorage.setItem('customerName', data.customer.name);
+                    window.location.href = 'customer-dashboard.html';
+                } else {
+                    otpError.textContent = data.error || 'Verification failed';
+                    otpError.style.display = 'block';
+                }
+            } catch (err) {
+                otpError.textContent = 'Connection error. Please try again.';
+                otpError.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify Email';
+            }
+        });
+
+        document.getElementById('resendOtpBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const otpError = document.getElementById('otpError');
+            try {
+                await fetch('/api/customers/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ email: pendingEmail })
+                });
+                otpError.style.color = '#28a745';
+                otpError.textContent = 'New code sent! Check your email.';
+                otpError.style.display = 'block';
+                setTimeout(() => { otpError.style.display = 'none'; otpError.style.color = ''; }, 4000);
+            } catch (err) {
+                otpError.style.color = '';
+                otpError.textContent = 'Failed to resend. Try again.';
+                otpError.style.display = 'block';
             }
         });
     </script>

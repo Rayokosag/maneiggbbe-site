@@ -156,6 +156,41 @@ async function sendPasswordReset({ to, name, token }) {
   }
 }
 
+async function sendOTPEmail({ to, name, code }) {
+  const client = getClient();
+  if (!client) return { success: false, reason: 'no_api_key' };
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: FROM_ADDRESS,
+      to: [to],
+      subject: `Your verification code: ${code}`,
+      html: emailWrapper(`
+        <h2 style="color: #333;">Verify Your Email</h2>
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Enter this code to complete your registration:</p>
+        <div style="text-align: center; margin: 28px 0;">
+          <div style="display: inline-block; background: #f8f9fa; border: 2px solid #667eea;
+                      border-radius: 12px; padding: 20px 40px;">
+            <span style="font-size: 2.5rem; font-weight: 700; letter-spacing: 10px; color: #667eea; font-family: monospace;">${code}</span>
+          </div>
+        </div>
+        <p style="color: #666; font-size: 0.9rem; text-align: center;">This code expires in <strong>10 minutes</strong>. If you didn't create an account, you can ignore this email.</p>
+      `)
+    });
+
+    if (error) {
+      console.error('Resend error (OTP):', error);
+      return { success: false, error: error.message };
+    }
+    console.log('OTP email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (err) {
+    console.error('Email send error:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 async function sendNewPickupAlert({ trackingNumber, senderName, senderEmail, senderPhone, recipientName, recipientCity, weight, speed, price, expectedDelivery }) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) {
@@ -204,4 +239,4 @@ async function sendNewPickupAlert({ trackingNumber, senderName, senderEmail, sen
   }
 }
 
-module.exports = { sendPickupConfirmation, sendStatusUpdate, sendPasswordReset, sendNewPickupAlert };
+module.exports = { sendPickupConfirmation, sendStatusUpdate, sendPasswordReset, sendNewPickupAlert, sendOTPEmail };

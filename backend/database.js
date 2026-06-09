@@ -83,6 +83,25 @@ async function initDatabase() {
       password_hash TEXT,
       phone TEXT,
       google_id TEXT,
+      email_verified INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Migration: add email_verified for existing databases
+  try {
+    await db.run('ALTER TABLE customers ADD COLUMN email_verified INTEGER DEFAULT 0');
+    // Mark existing customers as verified so they aren't locked out
+    await db.run('UPDATE customers SET email_verified = 1 WHERE email_verified = 0');
+  } catch (e) { /* column already exists */ }
+
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS email_verification_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      code TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
