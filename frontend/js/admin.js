@@ -16,11 +16,14 @@ if (localStorage.getItem('adminLoggedIn') !== 'true' || !localStorage.getItem('a
 // State
 let page = 1, totalPages = 1, statusFilter = '', searchQuery = '';
 let allPackages = [];
-let pendingDeleteTracking = null;
+let undoTimer = null;
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
-loadDashboard();
-loadCharts();
+document.addEventListener('DOMContentLoaded', function () {
+    setupEventListeners();
+    loadDashboard();
+    loadCharts();
+});
 
 // ── LOAD ─────────────────────────────────────────────────────────────────────
 async function loadDashboard() {
@@ -41,10 +44,10 @@ async function loadDashboard() {
         const pkgData = await pkgRes.json();
         const stats   = await statsRes.json();
 
-        document.getElementById('statTotal').textContent    = stats.total    ?? '—';
-        document.getElementById('statPending').textContent  = stats.pending  ?? '—';
-        document.getElementById('statTransit').textContent  = stats.inTransit ?? '—';
-        document.getElementById('statDelivered').textContent= stats.delivered ?? '—';
+        document.getElementById('statTotal').textContent     = stats.total     ?? '—';
+        document.getElementById('statPending').textContent   = stats.pending   ?? '—';
+        document.getElementById('statTransit').textContent   = stats.inTransit ?? '—';
+        document.getElementById('statDelivered').textContent = stats.delivered ?? '—';
 
         allPackages = pkgData.packages || [];
         if (pkgData.pagination) {
@@ -103,9 +106,9 @@ function renderTable() {
             <td>${date}</td>
             <td>
                 <div class="actions">
-                    <button class="btn-action btn-view"   onclick="openDetail('${pkg.trackingNumber}')">View</button>
-                    <button class="btn-action btn-update" onclick="openDetail('${pkg.trackingNumber}', true)">Update</button>
-                    <button class="btn-action btn-delete" onclick="askDelete('${pkg.trackingNumber}')">Delete</button>
+                    <button class="btn-action btn-view"   data-action="view"   data-tracking="${pkg.trackingNumber}">View</button>
+                    <button class="btn-action btn-update" data-action="update" data-tracking="${pkg.trackingNumber}">Update</button>
+                    <button class="btn-action btn-delete" data-action="delete" data-tracking="${pkg.trackingNumber}">Delete</button>
                 </div>
             </td>
         </tr>`;
@@ -116,18 +119,12 @@ function renderTable() {
 function renderPagination() {
     const el = document.getElementById('pagination');
     if (totalPages <= 1) { el.innerHTML = ''; return; }
-    let html = `<button class="btn-page" onclick="goPage(${page-1})" ${page<=1?'disabled':''}>← Prev</button>`;
+    let html = `<button class="btn-page" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>← Prev</button>`;
     for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn-page ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+        html += `<button class="btn-page ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
-    html += `<button class="btn-page" onclick="goPage(${page+1})" ${page>=totalPages?'disabled':''}>Next →</button>`;
+    html += `<button class="btn-page" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>Next →</button>`;
     el.innerHTML = html;
-}
-
-function goPage(p) {
-    if (p < 1 || p > totalPages) return;
-    page = p;
-    loadDashboard();
 }
 
 // ── DETAIL MODAL ──────────────────────────────────────────────────────────────
@@ -137,26 +134,26 @@ async function openDetail(trackingNumber, focusUpdate = false) {
         if (!res.ok) { toast('Package not found', 'error'); return; }
         const pkg = await res.json();
 
-        document.getElementById('modalTracking').textContent    = trackingNumber;
-        document.getElementById('dSenderName').textContent      = pkg.sender.name || '—';
-        document.getElementById('dSenderPhone').textContent     = pkg.sender.phone || '—';
-        document.getElementById('dSenderEmail').textContent     = pkg.sender.email || '—';
-        document.getElementById('dSenderAddress').textContent   = pkg.sender.address || '—';
-        document.getElementById('dSenderCity').textContent      = (pkg.sender.city || '') + (pkg.sender.zip ? ', ' + pkg.sender.zip : '');
-        document.getElementById('dRecipientName').textContent   = pkg.recipient.name || '—';
-        document.getElementById('dRecipientPhone').textContent  = pkg.recipient.phone || '—';
-        document.getElementById('dRecipientEmail').textContent  = pkg.recipient.email || '—';
-        document.getElementById('dRecipientAddress').textContent= pkg.recipient.address || '—';
-        document.getElementById('dRecipientCity').textContent   = (pkg.recipient.city || '') + (pkg.recipient.zip ? ', ' + pkg.recipient.zip : '');
-        document.getElementById('dWeight').textContent          = pkg.package.weight ? pkg.package.weight + ' kg' : '—';
-        document.getElementById('dSpeed').textContent           = capitalize(pkg.package.speed || '—');
-        document.getElementById('dPrice').textContent           = pkg.price || '—';
-        document.getElementById('dExpected').textContent        = pkg.expectedDelivery || '—';
-        document.getElementById('dDesc').textContent            = pkg.package.description || '—';
-        document.getElementById('newStatus').value              = pkg.status;
-        document.getElementById('newLocation').value            = '';
+        document.getElementById('modalTracking').textContent     = trackingNumber;
+        document.getElementById('dSenderName').textContent       = pkg.sender.name || '—';
+        document.getElementById('dSenderPhone').textContent      = pkg.sender.phone || '—';
+        document.getElementById('dSenderEmail').textContent      = pkg.sender.email || '—';
+        document.getElementById('dSenderAddress').textContent    = pkg.sender.address || '—';
+        document.getElementById('dSenderCity').textContent       = (pkg.sender.city || '') + (pkg.sender.zip ? ', ' + pkg.sender.zip : '');
+        document.getElementById('dRecipientName').textContent    = pkg.recipient.name || '—';
+        document.getElementById('dRecipientPhone').textContent   = pkg.recipient.phone || '—';
+        document.getElementById('dRecipientEmail').textContent   = pkg.recipient.email || '—';
+        document.getElementById('dRecipientAddress').textContent = pkg.recipient.address || '—';
+        document.getElementById('dRecipientCity').textContent    = (pkg.recipient.city || '') + (pkg.recipient.zip ? ', ' + pkg.recipient.zip : '');
+        document.getElementById('dWeight').textContent           = pkg.package.weight ? pkg.package.weight + ' kg' : '—';
+        document.getElementById('dSpeed').textContent            = capitalize(pkg.package.speed || '—');
+        document.getElementById('dPrice').textContent            = pkg.price || '—';
+        document.getElementById('dExpected').textContent         = pkg.expectedDelivery || '—';
+        document.getElementById('dDesc').textContent             = pkg.package.description || '—';
+        document.getElementById('newStatus').value               = pkg.status;
+        document.getElementById('newLocation').value             = '';
 
-        document.getElementById('submitUpdate').dataset.tracking = trackingNumber;
+        document.getElementById('submitUpdate').dataset.tracking  = trackingNumber;
         document.getElementById('uploadPhotosBtn').dataset.tracking = trackingNumber;
         document.getElementById('uploadStatus').textContent = '';
         renderPhotos(pkg.photos || []);
@@ -167,6 +164,7 @@ async function openDetail(trackingNumber, focusUpdate = false) {
             setTimeout(() => document.getElementById('newStatus').focus(), 100);
         }
     } catch (err) {
+        console.error('openDetail error:', err);
         toast('Failed to load package', 'error');
     }
 }
@@ -184,190 +182,229 @@ function renderPhotos(photos) {
     ).join('');
 }
 
-// Photo upload
-document.getElementById('uploadPhotosBtn').addEventListener('click', function() {
-    document.getElementById('photoInput').click();
-});
-
-document.getElementById('photoInput').addEventListener('change', async function() {
-    const files = this.files;
-    if (!files || files.length === 0) return;
-
-    const trackingNumber = document.getElementById('uploadPhotosBtn').dataset.tracking;
-    const statusEl = document.getElementById('uploadStatus');
-    statusEl.textContent = 'Uploading...';
-
-    const formData = new FormData();
-    Array.from(files).slice(0, 5).forEach(f => formData.append('photos', f));
-
-    try {
-        const res = await fetch(`${API}/packages/${trackingNumber}/photos`, {
-            method: 'POST',
-            headers: { 'Authorization': authHeaders().Authorization, 'X-Requested-With': 'XMLHttpRequest' },
-            body: formData
-        });
-        const data = await res.json();
-        if (!res.ok) { statusEl.textContent = data.error || 'Upload failed'; return; }
-
-        statusEl.textContent = `${data.photos.length} photo(s) uploaded`;
-        // Reload photos from fresh package data
-        const pkgRes = await fetch(`${API}/packages/${trackingNumber}`, { headers: authHeaders() });
-        const pkg = await pkgRes.json();
-        renderPhotos(pkg.photos || []);
-        this.value = '';
-    } catch (err) {
-        statusEl.textContent = 'Upload failed';
-    }
-});
-
 function closeDetail() {
     document.getElementById('detailModal').classList.remove('open');
 }
 
-document.getElementById('closeDetail').addEventListener('click', closeDetail);
-document.getElementById('detailModal').addEventListener('click', function(e) {
-    if (e.target === this) closeDetail();
-});
-
-// ── STATUS UPDATE ─────────────────────────────────────────────────────────────
-document.getElementById('submitUpdate').addEventListener('click', async function() {
-    const trackingNumber = this.dataset.tracking;
-    const status   = document.getElementById('newStatus').value;
-    const location = document.getElementById('newLocation').value.trim() || 'Distribution Center';
-
-    if (!status) { toast('Please select a status', 'error'); return; }
-
-    try {
-        const res = await fetch(`${API}/packages/${trackingNumber}`, {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ status, location })
-        });
-        if (!res.ok) throw new Error();
-        closeDetail();
-        await loadDashboard();
-        toast(`${trackingNumber} updated to "${status}"`, 'success');
-    } catch {
-        toast('Failed to update package', 'error');
-    }
-});
-
-// ── DELETE ────────────────────────────────────────────────────────────────────
+// ── DELETE WITH UNDO ──────────────────────────────────────────────────────────
 function askDelete(trackingNumber) {
-    pendingDeleteTracking = trackingNumber;
     document.getElementById('confirmTracking').textContent = trackingNumber;
     document.getElementById('confirmModal').classList.add('open');
+    document.getElementById('confirmModal').dataset.tracking = trackingNumber;
 }
 
-document.getElementById('cancelDelete').addEventListener('click', function() {
-    pendingDeleteTracking = null;
-    document.getElementById('confirmModal').classList.remove('open');
-});
-
-document.getElementById('confirmModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        pendingDeleteTracking = null;
-        this.classList.remove('open');
-    }
-});
-
-document.getElementById('confirmDelete').addEventListener('click', async function() {
-    if (!pendingDeleteTracking) return;
-    const tracking = pendingDeleteTracking;
-    document.getElementById('confirmModal').classList.remove('open');
-    pendingDeleteTracking = null;
-
+async function executeDelete(trackingNumber) {
     try {
-        const res = await fetch(`${API}/packages/${tracking}`, {
+        const res = await fetch(`${API}/packages/${trackingNumber}`, {
             method: 'DELETE',
             headers: authHeaders()
         });
         if (!res.ok) throw new Error();
         await loadDashboard();
-        toast(`Package ${tracking} deleted`, 'success');
+        showUndoToast(trackingNumber);
     } catch {
         toast('Failed to delete package', 'error');
     }
-});
+}
 
-// ── FILTERS ───────────────────────────────────────────────────────────────────
-let searchTimer;
-document.getElementById('searchInput').addEventListener('input', function() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-        searchQuery = this.value.trim();
-        renderTable();
-    }, 200);
-});
+function showUndoToast(trackingNumber) {
+    // Remove any existing undo toast
+    const existing = document.querySelector('.toast-undo');
+    if (existing) { existing.remove(); clearTimeout(undoTimer); }
 
-document.getElementById('statusFilter').addEventListener('change', function() {
-    statusFilter = this.value;
-    page = 1;
-    loadDashboard();
-});
+    const el = document.createElement('div');
+    el.className = 'toast toast-undo';
+    el.innerHTML = `Package ${trackingNumber} deleted &nbsp;<button id="undoDeleteBtn" style="background:#fff; color:#333; border:none; border-radius:4px; padding:3px 10px; cursor:pointer; font-weight:700; margin-left:6px;">Undo</button>`;
 
-document.getElementById('refreshBtn').addEventListener('click', function() {
-    this.classList.add('spinning');
-    loadDashboard().finally(() => {
-        setTimeout(() => this.classList.remove('spinning'), 500);
-    });
-});
+    document.getElementById('toast-container').appendChild(el);
 
-// ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
-document.getElementById('changePwBtn').addEventListener('click', function() {
-    document.getElementById('cpCurrent').value = '';
-    document.getElementById('cpNew').value = '';
-    document.getElementById('cpConfirm').value = '';
-    const msg = document.getElementById('changePwMsg');
-    msg.style.display = 'none';
-    document.getElementById('changePwModal').classList.add('open');
-    setTimeout(() => document.getElementById('cpCurrent').focus(), 100);
-});
-
-document.getElementById('cancelChangePw').addEventListener('click', function() {
-    document.getElementById('changePwModal').classList.remove('open');
-});
-
-document.getElementById('changePwModal').addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('open');
-});
-
-document.getElementById('submitChangePw').addEventListener('click', async function() {
-    const current = document.getElementById('cpCurrent').value;
-    const newPw   = document.getElementById('cpNew').value;
-    const confirm = document.getElementById('cpConfirm').value;
-    const msg     = document.getElementById('changePwMsg');
-
-    msg.style.display = 'none';
-
-    if (!current || !newPw || !confirm) {
-        showPwMsg('All fields are required', 'error'); return;
-    }
-    if (newPw.length < 8) {
-        showPwMsg('New password must be at least 8 characters', 'error'); return;
-    }
-    if (newPw !== confirm) {
-        showPwMsg('New passwords do not match', 'error'); return;
-    }
-
-    try {
-        const res = await fetch(`${API}/auth/password`, {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ currentPassword: current, newPassword: newPw })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            document.getElementById('changePwModal').classList.remove('open');
-            toast('Password changed successfully', 'success');
-        } else {
-            showPwMsg(data.error || 'Failed to change password', 'error');
+    el.querySelector('#undoDeleteBtn').addEventListener('click', async function () {
+        clearTimeout(undoTimer);
+        el.remove();
+        try {
+            const res = await fetch(`${API}/packages/${trackingNumber}/restore`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (!res.ok) throw new Error();
+            await loadDashboard();
+            toast(`Package ${trackingNumber} restored`, 'success');
+        } catch {
+            toast('Failed to restore package', 'error');
         }
-    } catch {
-        showPwMsg('Connection error. Please try again.', 'error');
-    }
-});
+    });
 
+    undoTimer = setTimeout(() => el.remove(), 8000);
+}
+
+// ── EVENT LISTENERS ───────────────────────────────────────────────────────────
+function setupEventListeners() {
+
+    // Table action buttons (event delegation — no onclick attributes needed)
+    document.getElementById('tableBody').addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const tracking = btn.dataset.tracking;
+        const action   = btn.dataset.action;
+        if (action === 'view')   openDetail(tracking);
+        if (action === 'update') openDetail(tracking, true);
+        if (action === 'delete') askDelete(tracking);
+    });
+
+    // Pagination (event delegation)
+    document.getElementById('pagination').addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-page]');
+        if (!btn || btn.disabled) return;
+        const p = parseInt(btn.dataset.page);
+        if (p < 1 || p > totalPages) return;
+        page = p;
+        loadDashboard();
+    });
+
+    // Detail modal
+    document.getElementById('closeDetail').addEventListener('click', closeDetail);
+    document.getElementById('detailModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDetail();
+    });
+
+    // Status update
+    document.getElementById('submitUpdate').addEventListener('click', async function () {
+        const trackingNumber = this.dataset.tracking;
+        const status   = document.getElementById('newStatus').value;
+        const location = document.getElementById('newLocation').value.trim() || 'Distribution Center';
+        if (!status) { toast('Please select a status', 'error'); return; }
+        try {
+            const res = await fetch(`${API}/packages/${trackingNumber}`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ status, location })
+            });
+            if (!res.ok) throw new Error();
+            closeDetail();
+            await loadDashboard();
+            toast(`${trackingNumber} updated to "${status}"`, 'success');
+        } catch {
+            toast('Failed to update package', 'error');
+        }
+    });
+
+    // Delete confirm modal
+    document.getElementById('cancelDelete').addEventListener('click', function () {
+        document.getElementById('confirmModal').classList.remove('open');
+    });
+    document.getElementById('confirmModal').addEventListener('click', function (e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+    document.getElementById('confirmDelete').addEventListener('click', async function () {
+        const tracking = document.getElementById('confirmModal').dataset.tracking;
+        document.getElementById('confirmModal').classList.remove('open');
+        if (tracking) await executeDelete(tracking);
+    });
+
+    // Photo upload
+    document.getElementById('uploadPhotosBtn').addEventListener('click', function () {
+        document.getElementById('photoInput').click();
+    });
+    document.getElementById('photoInput').addEventListener('change', async function () {
+        const files = this.files;
+        if (!files || files.length === 0) return;
+        const trackingNumber = document.getElementById('uploadPhotosBtn').dataset.tracking;
+        const statusEl = document.getElementById('uploadStatus');
+        statusEl.textContent = 'Uploading...';
+        const formData = new FormData();
+        Array.from(files).slice(0, 5).forEach(f => formData.append('photos', f));
+        try {
+            const res = await fetch(`${API}/packages/${trackingNumber}/photos`, {
+                method: 'POST',
+                headers: { 'Authorization': authHeaders().Authorization, 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) { statusEl.textContent = data.error || 'Upload failed'; return; }
+            statusEl.textContent = `${data.photos.length} photo(s) uploaded`;
+            const pkgRes = await fetch(`${API}/packages/${trackingNumber}`, { headers: authHeaders() });
+            const pkg = await pkgRes.json();
+            renderPhotos(pkg.photos || []);
+            this.value = '';
+        } catch {
+            statusEl.textContent = 'Upload failed';
+        }
+    });
+
+    // Filters
+    let searchTimer;
+    document.getElementById('searchInput').addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { searchQuery = this.value.trim(); renderTable(); }, 200);
+    });
+    document.getElementById('statusFilter').addEventListener('change', function () {
+        statusFilter = this.value; page = 1; loadDashboard();
+    });
+    document.getElementById('refreshBtn').addEventListener('click', function () {
+        this.classList.add('spinning');
+        loadDashboard().finally(() => setTimeout(() => this.classList.remove('spinning'), 500));
+    });
+
+    // Change password
+    document.getElementById('changePwBtn').addEventListener('click', function () {
+        document.getElementById('cpCurrent').value = '';
+        document.getElementById('cpNew').value = '';
+        document.getElementById('cpConfirm').value = '';
+        document.getElementById('changePwMsg').style.display = 'none';
+        document.getElementById('changePwModal').classList.add('open');
+        setTimeout(() => document.getElementById('cpCurrent').focus(), 100);
+    });
+    document.getElementById('cancelChangePw').addEventListener('click', function () {
+        document.getElementById('changePwModal').classList.remove('open');
+    });
+    document.getElementById('changePwModal').addEventListener('click', function (e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+    document.getElementById('submitChangePw').addEventListener('click', async function () {
+        const current = document.getElementById('cpCurrent').value;
+        const newPw   = document.getElementById('cpNew').value;
+        const confirm = document.getElementById('cpConfirm').value;
+        if (!current || !newPw || !confirm) { showPwMsg('All fields are required', 'error'); return; }
+        if (newPw.length < 8) { showPwMsg('New password must be at least 8 characters', 'error'); return; }
+        if (newPw !== confirm) { showPwMsg('New passwords do not match', 'error'); return; }
+        try {
+            const res = await fetch(`${API}/auth/password`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('changePwModal').classList.remove('open');
+                toast('Password changed successfully', 'success');
+            } else {
+                showPwMsg(data.error || 'Failed to change password', 'error');
+            }
+        } catch {
+            showPwMsg('Connection error. Please try again.', 'error');
+        }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async function () {
+        try { await fetch(`${API}/auth/logout`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } }); } catch {}
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUsername');
+        window.location.href = 'login.html';
+    });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+    return { 'Pending Pickup': 'badge-pending', 'Picked Up': 'badge-picked',
+             'In Transit': 'badge-transit', 'Out for Delivery': 'badge-delivery',
+             'Delivered': 'badge-delivered' }[status] || '';
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function showPwMsg(text, type) {
     const msg = document.getElementById('changePwMsg');
     msg.textContent = text;
@@ -376,31 +413,6 @@ function showPwMsg(text, type) {
     msg.style.border      = '1px solid ' + (type === 'error' ? '#5a2a2a' : '#2a5a2a');
     msg.style.display     = 'block';
 }
-
-// ── LOGOUT ────────────────────────────────────────────────────────────────────
-document.getElementById('logoutBtn').addEventListener('click', async function() {
-    try {
-        await fetch(`${API}/auth/logout`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-    } catch {}
-    localStorage.removeItem('adminLoggedIn');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUsername');
-    window.location.href = 'login.html';
-});
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-function statusBadge(status) {
-    return { 'Pending Pickup': 'badge-pending', 'Picked Up': 'badge-picked',
-             'In Transit': 'badge-transit', 'Out for Delivery': 'badge-delivery',
-             'Delivered': 'badge-delivered' }[status] || '';
-}
-
-function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-
-function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function toast(msg, type = 'success') {
     const el = document.createElement('div');
     el.className = 'toast toast-' + type;
@@ -418,7 +430,7 @@ async function loadCharts() {
         const res = await fetch(`${API}/packages/analytics`, { headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
-
+        if (typeof Chart === 'undefined') return;
         renderDailyChart(data.dailyPackages);
         renderStatusChart(data.statusBreakdown);
     } catch (err) {
@@ -432,57 +444,33 @@ function renderDailyChart(dailyPackages) {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
     const counts = dailyPackages.map(d => d.count);
-
     if (dailyChartInstance) dailyChartInstance.destroy();
     dailyChartInstance = new Chart(document.getElementById('dailyChart'), {
         type: 'bar',
         data: {
             labels,
-            datasets: [{
-                label: 'Packages',
-                data: counts,
-                backgroundColor: 'rgba(102, 126, 234, 0.7)',
-                borderColor: '#667eea',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
+            datasets: [{ label: 'Packages', data: counts, backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                         borderColor: '#667eea', borderWidth: 1, borderRadius: 4 }]
         },
         options: {
             responsive: true,
             plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                x: { grid: { display: false } }
-            }
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }
         }
     });
 }
 
 function renderStatusChart(statusBreakdown) {
-    const statusColors = {
-        'Pending Pickup': '#f0ad4e',
-        'Picked Up':      '#5bc0de',
-        'In Transit':     '#667eea',
-        'Out for Delivery': '#fd7e14',
-        'Delivered':      '#28a745'
-    };
-
+    const statusColors = { 'Pending Pickup': '#f0ad4e', 'Picked Up': '#5bc0de',
+                           'In Transit': '#667eea', 'Out for Delivery': '#fd7e14', 'Delivered': '#28a745' };
     const labels = statusBreakdown.map(s => s.status);
     const counts = statusBreakdown.map(s => s.count);
     const colors = labels.map(l => statusColors[l] || '#aaa');
-
     if (statusChartInstance) statusChartInstance.destroy();
     statusChartInstance = new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{ data: counts, backgroundColor: colors, borderWidth: 2 }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } }
-            }
-        }
+        data: { labels, datasets: [{ data: counts, backgroundColor: colors, borderWidth: 2 }] },
+        options: { responsive: true,
+                   plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } } }
     });
 }

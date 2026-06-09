@@ -73,15 +73,15 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     let countResult, packages;
 
     if (status) {
-      countResult = await db.get('SELECT COUNT(*) as count FROM packages WHERE status = ?', [status]);
+      countResult = await db.get('SELECT COUNT(*) as count FROM packages WHERE status = ? AND deleted_at IS NULL', [status]);
       packages = await db.all(
-        `SELECT * FROM packages WHERE status = ? ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
+        `SELECT * FROM packages WHERE status = ? AND deleted_at IS NULL ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
         [status, limitNum, offset]
       );
     } else {
-      countResult = await db.get('SELECT COUNT(*) as count FROM packages');
+      countResult = await db.get('SELECT COUNT(*) as count FROM packages WHERE deleted_at IS NULL');
       packages = await db.all(
-        `SELECT * FROM packages ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
+        `SELECT * FROM packages WHERE deleted_at IS NULL ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ? OFFSET ?`,
         [limitNum, offset]
       );
     }
@@ -109,10 +109,10 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
   const db = getDb();
 
   try {
-    const total = await db.get('SELECT COUNT(*) as count FROM packages');
-    const inTransit = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'In Transit'");
-    const delivered = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Delivered'");
-    const pending = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Pending Pickup'");
+    const total = await db.get("SELECT COUNT(*) as count FROM packages WHERE deleted_at IS NULL");
+    const inTransit = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'In Transit' AND deleted_at IS NULL");
+    const delivered = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Delivered' AND deleted_at IS NULL");
+    const pending = await db.get("SELECT COUNT(*) as count FROM packages WHERE status = 'Pending Pickup' AND deleted_at IS NULL");
 
     res.json({
       total: total?.count || 0,
@@ -142,7 +142,7 @@ router.get('/analytics', authenticateToken, requireAdmin, async (req, res) => {
     const dailyRows = await db.all(
       `SELECT substr(request_date, 1, 10) as day, COUNT(*) as count
        FROM packages
-       WHERE substr(request_date, 1, 10) >= ?
+       WHERE substr(request_date, 1, 10) >= ? AND deleted_at IS NULL
        GROUP BY day`,
       [days[0]]
     );
@@ -154,7 +154,7 @@ router.get('/analytics', authenticateToken, requireAdmin, async (req, res) => {
 
     // Status breakdown
     const statusRows = await db.all(
-      `SELECT status, COUNT(*) as count FROM packages GROUP BY status`
+      `SELECT status, COUNT(*) as count FROM packages WHERE deleted_at IS NULL GROUP BY status`
     );
 
     res.json({ dailyPackages, statusBreakdown: statusRows });
@@ -408,20 +408,41 @@ router.delete('/:trackingNumber', authenticateToken, requireAdmin, async (req, r
   const db = getDb();
 
   try {
-    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ? AND deleted_at IS NULL', [trackingNumber]);
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' });
     }
 
-    await db.run('DELETE FROM timeline_events WHERE tracking_number = ?', [trackingNumber]);
-    await db.run('DELETE FROM packages WHERE tracking_number = ?', [trackingNumber]);
+    await db.run('UPDATE packages SET deleted_at = ? WHERE tracking_number = ?', [new Date().toISOString(), trackingNumber]);
     saveDatabase();
 
     res.json({ success: true, message: 'Package deleted' });
   } catch (error) {
     console.error('Error deleting package:', error);
     res.status(500).json({ error: 'Failed to delete package' });
+  }
+});
+
+// POST /api/packages/:trackingNumber/restore - Undo delete (admin only)
+router.post('/:trackingNumber/restore', authenticateToken, requireAdmin, async (req, res) => {
+  const { trackingNumber } = req.params;
+  const db = getDb();
+
+  try {
+    const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ? AND deleted_at IS NOT NULL', [trackingNumber]);
+
+    if (!pkg) {
+      return res.status(404).json({ error: 'Package not found or not deleted' });
+    }
+
+    await db.run('UPDATE packages SET deleted_at = NULL WHERE tracking_number = ?', [trackingNumber]);
+    saveDatabase();
+
+    res.json({ success: true, message: 'Package restored' });
+  } catch (error) {
+    console.error('Error restoring package:', error);
+    res.status(500).json({ error: 'Failed to restore package' });
   }
 });
 

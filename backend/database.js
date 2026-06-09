@@ -91,8 +91,12 @@ async function initDatabase() {
   // Migration: add email_verified for existing databases
   try {
     await db.run('ALTER TABLE customers ADD COLUMN email_verified INTEGER DEFAULT 0');
-    // Mark existing customers as verified so they aren't locked out
     await db.run('UPDATE customers SET email_verified = 1 WHERE email_verified = 0');
+  } catch (e) { /* column already exists */ }
+
+  // Migration: soft-delete support
+  try {
+    await db.run('ALTER TABLE packages ADD COLUMN deleted_at TEXT DEFAULT NULL');
   } catch (e) { /* column already exists */ }
 
   await db.run(`
