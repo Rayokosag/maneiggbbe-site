@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 
 const { initDatabase } = require('./database');
+const { initOAuth } = require('./oauth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,8 +69,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'maneiggbbe-session-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: true, sameSite: 'strict', maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { secure: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 }
 }));
+
+// Google OAuth (no-op if credentials not set)
+initOAuth(app);
 
 // CSRF protection for state-changing requests
 app.use((req, res, next) => {
