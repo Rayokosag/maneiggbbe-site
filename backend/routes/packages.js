@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, saveDatabase } = require('../database');
-const { sendPickupConfirmation, sendStatusUpdate } = require('../email');
+const { sendPickupConfirmation, sendStatusUpdate, sendNewPickupAlert } = require('../email');
 const { upload, validateUploadedFiles, getPhotosForPackage } = require('../upload');
 const { authenticateToken, verifyToken } = require('../jwt');
 const { requireAdmin } = require('../roles');
@@ -200,15 +200,18 @@ router.post('/', validatePackage, async (req, res) => {
 
     saveDatabase();
 
-    if (sender.email) {
-      sendPickupConfirmation({
-        to: sender.email,
-        trackingNumber,
-        senderName: sender.name,
-        recipientName: recipient.name,
-        expectedDelivery
-      }).catch(err => console.error('Failed to send confirmation email:', err));
-    }
+    sendNewPickupAlert({
+      trackingNumber,
+      senderName: sender.name,
+      senderEmail: sender.email || null,
+      senderPhone: sender.phone || null,
+      recipientName: recipient.name,
+      recipientCity: recipient.city,
+      weight: pkgInfo.weight,
+      speed: pkgInfo.speed,
+      price,
+      expectedDelivery
+    }).catch(err => console.error('Failed to send admin pickup alert:', err));
 
     const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
     res.status(201).json(await formatPackage(pkg));
