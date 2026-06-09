@@ -325,7 +325,7 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, validatePackageS
 });
 
 // POST /api/packages/:trackingNumber/photos - Upload package photos
-router.post('/:trackingNumber/photos', upload.array('photos', 5), validateUploadedFiles, async (req, res) => {
+router.post('/:trackingNumber/photos', authenticateToken, requireAdmin, upload.array('photos', 5), validateUploadedFiles, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 

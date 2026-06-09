@@ -122,10 +122,9 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         const data = await response.json();
 
         // Upload photos if any were selected
-        const photoInput = document.getElementById('packagePhotos');
-        if (photoInput && photoInput.files && photoInput.files.length > 0) {
+        const files = (window.selectedFiles || []).slice(0, 5);
+        if (files.length > 0) {
             const photoFormData = new FormData();
-            const files = Array.from(photoInput.files).slice(0, 5);
             files.forEach(function(file) {
                 photoFormData.append('photos', file);
             });
@@ -141,6 +140,7 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         }
 
         // Hide form and show success message
+        window.selectedFiles = [];
         document.getElementById('pickupForm').style.display = 'none';
         document.getElementById('generatedTrackingNumber').textContent = data.trackingNumber;
         document.getElementById('trackLink').href = 'tracking.html?track=' + data.trackingNumber;

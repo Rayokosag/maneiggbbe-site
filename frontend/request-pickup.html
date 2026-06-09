@@ -498,9 +498,11 @@
                     <h3>Package Photos</h3>
                     <p style="color: #666; margin-bottom: 1rem; font-size: 0.9rem;">Upload photos of your package (optional, max 5 images)</p>
                     <div class="form-group">
-                        <input type="file" id="packagePhotos" accept="image/*" multiple style="padding: 0.5rem;">
+                        <input type="file" id="packagePhotos" accept="image/*" multiple style="display:none;">
+                        <button type="button" id="choosePhotosBtn" style="padding: 0.5rem 1.2rem; border: 2px dashed #ccc; background: #fafafa; border-radius: 8px; cursor: pointer; color: #555; font-size: 0.9rem;">+ Choose Photos</button>
+                        <span id="photoCount" style="margin-left: 10px; color: #888; font-size: 0.85rem;"></span>
                     </div>
-                    <div id="photoPreview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+                    <div id="photoPreview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;"></div>
                 </div>
 
                 <!-- Shipping Rates -->
@@ -581,21 +583,56 @@
     <script src="js/navbar.js"></script>
     <script src="js/pickup.js"></script>
     <script>
+        // Custom file list so individual photos can be removed
+        window.selectedFiles = [];
+
+        document.getElementById('choosePhotosBtn').addEventListener('click', function() {
+            document.getElementById('packagePhotos').click();
+        });
+
         document.getElementById('packagePhotos').addEventListener('change', function(e) {
+            var incoming = Array.from(e.target.files);
+            incoming.forEach(function(file) {
+                if (window.selectedFiles.length < 5) {
+                    window.selectedFiles.push(file);
+                }
+            });
+            this.value = ''; // reset so same file can be re-added after removal
+            renderPhotoPreview();
+        });
+
+        function renderPhotoPreview() {
             var preview = document.getElementById('photoPreview');
+            var countEl = document.getElementById('photoCount');
             preview.innerHTML = '';
-            var files = Array.from(e.target.files).slice(0, 5);
-            files.forEach(function(file) {
+            countEl.textContent = window.selectedFiles.length > 0 ? window.selectedFiles.length + '/5 selected' : '';
+
+            window.selectedFiles.forEach(function(file, index) {
                 var reader = new FileReader();
                 reader.onload = function(ev) {
+                    var wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'position:relative; display:inline-block;';
+
                     var img = document.createElement('img');
                     img.src = ev.target.result;
-                    img.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e0e0e0;';
-                    preview.appendChild(img);
+                    img.style.cssText = 'width:90px; height:90px; object-fit:cover; border-radius:8px; border:2px solid #e0e0e0; display:block;';
+
+                    var removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.textContent = '✕';
+                    removeBtn.style.cssText = 'position:absolute; top:-6px; right:-6px; background:#e53935; color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:11px; cursor:pointer; line-height:20px; text-align:center; padding:0;';
+                    removeBtn.addEventListener('click', function() {
+                        window.selectedFiles.splice(index, 1);
+                        renderPhotoPreview();
+                    });
+
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(removeBtn);
+                    preview.appendChild(wrapper);
                 };
                 reader.readAsDataURL(file);
             });
-        });
+        }
     </script>
 </body>
 </html>

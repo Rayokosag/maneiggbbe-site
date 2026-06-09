@@ -156,6 +156,10 @@ async function openDetail(trackingNumber, focusUpdate = false) {
         document.getElementById('newLocation').value            = '';
 
         document.getElementById('submitUpdate').dataset.tracking = trackingNumber;
+        document.getElementById('uploadPhotosBtn').dataset.tracking = trackingNumber;
+        document.getElementById('uploadStatus').textContent = '';
+        renderPhotos(pkg.photos || []);
+
         document.getElementById('detailModal').classList.add('open');
 
         if (focusUpdate) {
@@ -165,6 +169,55 @@ async function openDetail(trackingNumber, focusUpdate = false) {
         toast('Failed to load package', 'error');
     }
 }
+
+function renderPhotos(photos) {
+    const grid = document.getElementById('photoGrid');
+    if (!photos || photos.length === 0) {
+        grid.innerHTML = '<span style="color:#888; font-size:0.85rem;">No photos yet.</span>';
+        return;
+    }
+    grid.innerHTML = photos.map(url =>
+        `<a href="${url}" target="_blank">
+            <img src="${url}" style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ddd; cursor:pointer;">
+        </a>`
+    ).join('');
+}
+
+// Photo upload
+document.getElementById('uploadPhotosBtn').addEventListener('click', function() {
+    document.getElementById('photoInput').click();
+});
+
+document.getElementById('photoInput').addEventListener('change', async function() {
+    const files = this.files;
+    if (!files || files.length === 0) return;
+
+    const trackingNumber = document.getElementById('uploadPhotosBtn').dataset.tracking;
+    const statusEl = document.getElementById('uploadStatus');
+    statusEl.textContent = 'Uploading...';
+
+    const formData = new FormData();
+    Array.from(files).slice(0, 5).forEach(f => formData.append('photos', f));
+
+    try {
+        const res = await fetch(`${API}/packages/${trackingNumber}/photos`, {
+            method: 'POST',
+            headers: { 'Authorization': authHeaders().Authorization, 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) { statusEl.textContent = data.error || 'Upload failed'; return; }
+
+        statusEl.textContent = `${data.photos.length} photo(s) uploaded`;
+        // Reload photos from fresh package data
+        const pkgRes = await fetch(`${API}/packages/${trackingNumber}`, { headers: authHeaders() });
+        const pkg = await pkgRes.json();
+        renderPhotos(pkg.photos || []);
+        this.value = '';
+    } catch (err) {
+        statusEl.textContent = 'Upload failed';
+    }
+});
 
 function closeDetail() {
     document.getElementById('detailModal').classList.remove('open');
