@@ -4,187 +4,650 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Maneigbbe</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        .admin-nav {
+            background: #161616;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 0 2rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            text-decoration: none;
+        }
+        .nav-brand img { width: 32px; height: 32px; border-radius: 6px; }
+        .admin-badge {
+            background: #2a1a3a;
+            color: #ab47bc;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .nav-link {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: #fff; }
+        .btn-logout {
+            background: none;
+            border: 1px solid #333;
+            color: #888;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { color: #fff; border-color: #666; }
+
+        /* MAIN */
+        .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+        /* PAGE HEADER */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.75rem;
+        }
+        .page-header h1 { font-size: 1.5rem; color: #fff; }
+        .page-header p { color: #666; font-size: 0.9rem; margin-top: 0.2rem; }
+        .btn-refresh {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            color: #ccc;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn-refresh:hover { background: #2a2a2a; color: #fff; }
+        .btn-refresh.spinning { animation: spin 0.5s linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .icon-total { background: #1a2535; }
+        .icon-transit { background: #1a2f1a; }
+        .icon-delivered { background: #1a3a1a; }
+        .icon-pending { background: #3a2500; }
+        .stat-card-val { font-size: 2rem; font-weight: 700; color: #fff; line-height: 1; }
+        .stat-card-label { color: #666; font-size: 0.8rem; margin-top: 0.2rem; }
+
+        /* FILTERS */
+        .filters-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-wrap { position: relative; flex: 1; min-width: 220px; }
+        .search-wrap svg {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #555;
+            pointer-events: none;
+        }
+        .input-search {
+            width: 100%;
+            padding: 0.65rem 1rem 0.65rem 2.5rem;
+            background: #161616;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-search:focus { border-color: #555; }
+        .select-filter {
+            padding: 0.65rem 1rem;
+            background: #161616;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 160px;
+        }
+        .select-filter:focus { border-color: #555; }
+        .results-count { color: #555; font-size: 0.85rem; margin-left: auto; }
+
+        /* TABLE */
+        .table-wrap {
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #1a1a1a;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #555;
+            border-bottom: 1px solid #222;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #1c1c1c; }
+        .cell-sub { color: #555; font-size: 0.78rem; margin-top: 0.15rem; }
+
+        /* STATUS BADGES */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-pending { background: #3a2500; color: #f5a623; }
+        .badge-picked  { background: #1a2f3a; color: #4fc3f7; }
+        .badge-transit { background: #1a2a3a; color: #42a5f5; }
+        .badge-delivery{ background: #2a1a3a; color: #ab47bc; }
+        .badge-delivered{ background: #1a3a1a; color: #66bb6a; }
+
+        /* ACTION BUTTONS */
+        .actions { display: flex; gap: 0.4rem; }
+        .btn-action {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .btn-action:hover { opacity: 0.8; }
+        .btn-view { background: #1a2535; color: #64b5f6; }
+        .btn-update { background: #1a3a1a; color: #66bb6a; }
+        .btn-delete { background: #3a1a1a; color: #ef5350; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #444;
+        }
+        .empty-state p { margin-top: 0.5rem; font-size: 0.9rem; }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .btn-page {
+            padding: 0.4rem 0.75rem;
+            background: #161616;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-page:hover:not(:disabled) { background: #222; color: #fff; }
+        .btn-page.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+        .btn-page:disabled { opacity: 0.3; cursor: default; }
+
+        /* MODAL OVERLAY */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.open { display: flex; }
+
+        /* DETAIL MODAL */
+        .modal-box {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #2a2a2a;
+            position: sticky;
+            top: 0;
+            background: #1a1a1a;
+            z-index: 1;
+        }
+        .modal-head h3 { font-size: 1.1rem; color: #fff; }
+        .modal-head .tracking-id { color: #64b5f6; font-family: monospace; font-size: 1rem; }
+        .btn-close {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem;
+            transition: color 0.2s;
+        }
+        .btn-close:hover { color: #fff; }
+        .modal-body { padding: 1.5rem; }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 520px) { .detail-grid { grid-template-columns: 1fr; } }
+        .detail-section h4 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #555;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+        .detail-row {
+            margin-bottom: 0.5rem;
+            font-size: 0.88rem;
+        }
+        .detail-row span { color: #555; font-size: 0.78rem; display: block; margin-bottom: 0.1rem; }
+        .detail-row strong { color: #e0e0e0; }
+        .divider-line {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 1.25rem 0;
+        }
+        .pkg-info-row {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .pkg-info-row .detail-row { flex: 1; min-width: 100px; }
+
+        /* STATUS UPDATE FORM inside modal */
+        .status-form-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .status-form-row .form-group { flex: 1; min-width: 140px; }
+        .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            color: #666;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .form-group select,
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group select:focus,
+        .form-group input[type="text"]:focus { border-color: #555; }
+        .btn-submit {
+            padding: 0.65rem 1.5rem;
+            background: #fff;
+            color: #111;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.85; }
+
+        /* CONFIRM MODAL */
+        .confirm-box {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 380px;
+            padding: 1.75rem;
+            text-align: center;
+        }
+        .confirm-box h3 { color: #fff; margin-bottom: 0.5rem; }
+        .confirm-box p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+        .btn-cancel-confirm {
+            padding: 0.6rem 1.5rem;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-cancel-confirm:hover { background: #2a2a2a; color: #fff; }
+        .btn-confirm-delete {
+            padding: 0.6rem 1.5rem;
+            background: #ef5350;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        .btn-confirm-delete:hover { opacity: 0.85; }
+
+        /* TOAST */
+        #toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            animation: slideIn 0.25s ease;
+            max-width: 320px;
+        }
+        .toast-success { background: #1a3a1a; color: #66bb6a; border: 1px solid #2a5a2a; }
+        .toast-error { background: #3a1a1a; color: #ef5350; border: 1px solid #5a2a2a; }
+        @keyframes slideIn {
+            from { transform: translateX(60px); opacity: 0; }
+            to   { transform: translateX(0);   opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Admin Navigation -->
-    <nav class="navbar admin-navbar">
-        <div class="container">
-            <div class="logo">
-                <a href="admin.html">
-                    <img src="images/mlogo.png" alt="Maneigbbe Logo">
-                    <span>Maneigbbe Admin</span>
-                </a>
-            </div>
-            <ul class="nav-links">
-                <li><a href="admin.html" class="active">Dashboard</a></li>
-                <li><a href="index.html">View Site</a></li>
-                <li><a href="#" id="logoutBtn">Logout</a></li>
-            </ul>
+
+    <!-- NAV -->
+    <nav class="admin-nav">
+        <a href="admin.html" class="nav-brand">
+            <img src="images/mlogo.png" alt="Logo">
+            Maneigbbe
+            <span class="admin-badge">Admin</span>
+        </a>
+        <div class="nav-right">
+            <a href="index.html" class="nav-link" target="_blank">View Site ↗</a>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
         </div>
     </nav>
 
-    <!-- Dashboard -->
-    <section class="admin-dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2>Admin Dashboard</h2>
-                <p>Manage all deliveries and track packages</p>
-            </div>
+    <!-- MAIN -->
+    <main class="main">
 
-            <!-- Stats Cards -->
-            <div class="admin-stats">
-                <div class="stat-card-admin">
-                    <div class="stat-icon">[T]</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="totalPackages">0</div>
-                        <div class="stat-label">Total Packages</div>
-                    </div>
-                </div>
-                <div class="stat-card-admin">
-                    <div class="stat-icon">[&gt;]</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="inTransit">0</div>
-                        <div class="stat-label">In Transit</div>
-                    </div>
-                </div>
-                <div class="stat-card-admin">
-                    <div class="stat-icon">[+]</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="delivered">0</div>
-                        <div class="stat-label">Delivered</div>
-                    </div>
-                </div>
-                <div class="stat-card-admin">
-                    <div class="stat-icon">[.]</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="pending">0</div>
-                        <div class="stat-label">Pending Pickup</div>
-                    </div>
+        <!-- Page header -->
+        <div class="page-header">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Manage all pickup requests and deliveries</p>
+            </div>
+            <button class="btn-refresh" id="refreshBtn">↻ Refresh</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-icon icon-total">📦</div>
+                <div>
+                    <div class="stat-card-val" id="statTotal">—</div>
+                    <div class="stat-card-label">Total Packages</div>
                 </div>
             </div>
-
-            <!-- Packages Table -->
-            <div class="packages-section">
-                <div class="section-title">
-                    <h3>All Packages</h3>
-                    <button class="btn btn-small" id="refreshBtn">Refresh</button>
+            <div class="stat-card">
+                <div class="stat-card-icon icon-pending">⏳</div>
+                <div>
+                    <div class="stat-card-val" id="statPending">—</div>
+                    <div class="stat-card-label">Pending Pickup</div>
                 </div>
-
-                <!-- Search and Filter Controls -->
-                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
-                    <input type="text" id="searchInput" placeholder="Search tracking #, sender, recipient..." style="flex: 1; min-width: 200px; padding: 0.6rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
-                    <select id="statusFilter" style="padding: 0.6rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; background: white;">
-                        <option value="">All Statuses</option>
-                        <option value="Pending Pickup">Pending Pickup</option>
-                        <option value="Picked Up">Picked Up</option>
-                        <option value="In Transit">In Transit</option>
-                        <option value="Out for Delivery">Out for Delivery</option>
-                        <option value="Delivered">Delivered</option>
-                    </select>
-                </div>
-
-                <div class="table-container">
-                    <table class="packages-table">
-                        <thead>
-                            <tr>
-                                <th>Tracking #</th>
-                                <th>Sender</th>
-                                <th>Recipient</th>
-                                <th>Status</th>
-                                <th>Speed</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="packagesTableBody">
-                            <!-- Packages will be inserted here by JavaScript -->
-                        </tbody>
-                    </table>
-                    
-                    <div id="noPackages" class="no-data" style="display: none;">
-                        <div class="no-data-icon">[ ]</div>
-                        <h3>No Packages Yet</h3>
-                        <p>Packages will appear here when customers request pickups</p>
-                        <a href="request-pickup.html" class="btn btn-primary">Create Test Package</a>
-                    </div>
-                </div>
-
-                <!-- Pagination -->
-                <div id="paginationControls" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;"></div>
             </div>
+            <div class="stat-card">
+                <div class="stat-card-icon icon-transit">🚚</div>
+                <div>
+                    <div class="stat-card-val" id="statTransit">—</div>
+                    <div class="stat-card-label">In Transit</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon icon-delivered">✅</div>
+                <div>
+                    <div class="stat-card-val" id="statDelivered">—</div>
+                    <div class="stat-card-label">Delivered</div>
+                </div>
+            </div>
+        </div>
 
-            <!-- Update Package Modal -->
-            <div id="updateModal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>Update Package Status</h3>
-                        <span class="modal-close">&times;</span>
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="search-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="input-search" id="searchInput" placeholder="Search tracking #, sender, recipient…">
+            </div>
+            <select class="select-filter" id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="Pending Pickup">Pending Pickup</option>
+                <option value="Picked Up">Picked Up</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+            </select>
+            <span class="results-count" id="resultsCount"></span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tracking #</th>
+                        <th>Sender</th>
+                        <th>Recipient</th>
+                        <th>Status</th>
+                        <th>Speed</th>
+                        <th>Price</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div style="font-size:2rem;">📭</div>
+                <p>No packages found</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+
+    </main>
+
+    <!-- DETAIL / UPDATE MODAL -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <div>
+                    <div style="color:#666; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.2rem;">Package Details</div>
+                    <span class="tracking-id" id="modalTracking"></span>
+                </div>
+                <button class="btn-close" id="closeDetail">&times;</button>
+            </div>
+            <div class="modal-body">
+
+                <div class="detail-grid">
+                    <!-- Sender -->
+                    <div class="detail-section">
+                        <h4>📤 Sender</h4>
+                        <div class="detail-row"><span>Name</span><strong id="dSenderName">—</strong></div>
+                        <div class="detail-row"><span>Phone</span><strong id="dSenderPhone">—</strong></div>
+                        <div class="detail-row"><span>Email</span><strong id="dSenderEmail">—</strong></div>
+                        <div class="detail-row"><span>Address</span><strong id="dSenderAddress">—</strong></div>
+                        <div class="detail-row"><span>City / ZIP</span><strong id="dSenderCity">—</strong></div>
                     </div>
-                    
-                    <div class="modal-body">
-                        <div class="package-details">
-                            <h4>Tracking: <span id="modalTrackingNumber"></span></h4>
-                            <p><strong>From:</strong> <span id="modalFrom"></span></p>
-                            <p><strong>To:</strong> <span id="modalTo"></span></p>
+                    <!-- Recipient -->
+                    <div class="detail-section">
+                        <h4>📥 Recipient</h4>
+                        <div class="detail-row"><span>Name</span><strong id="dRecipientName">—</strong></div>
+                        <div class="detail-row"><span>Phone</span><strong id="dRecipientPhone">—</strong></div>
+                        <div class="detail-row"><span>Email</span><strong id="dRecipientEmail">—</strong></div>
+                        <div class="detail-row"><span>Address</span><strong id="dRecipientAddress">—</strong></div>
+                        <div class="detail-row"><span>City / ZIP</span><strong id="dRecipientCity">—</strong></div>
+                    </div>
+                </div>
+
+                <hr class="divider-line">
+
+                <!-- Package info -->
+                <div class="pkg-info-row">
+                    <div class="detail-row"><span>Weight</span><strong id="dWeight">—</strong></div>
+                    <div class="detail-row"><span>Speed</span><strong id="dSpeed">—</strong></div>
+                    <div class="detail-row"><span>Price</span><strong id="dPrice">—</strong></div>
+                    <div class="detail-row"><span>Expected Delivery</span><strong id="dExpected">—</strong></div>
+                    <div class="detail-row"><span>Description</span><strong id="dDesc">—</strong></div>
+                </div>
+
+                <hr class="divider-line">
+
+                <!-- Status update -->
+                <div style="margin-bottom:0.75rem;">
+                    <div style="font-size:0.78rem; color:#555; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.75rem; font-weight:700;">Update Status</div>
+                    <div class="status-form-row" id="statusUpdateForm">
+                        <div class="form-group">
+                            <label>New Status</label>
+                            <select id="newStatus">
+                                <option value="Pending Pickup">Pending Pickup</option>
+                                <option value="Picked Up">Picked Up</option>
+                                <option value="In Transit">In Transit</option>
+                                <option value="Out for Delivery">Out for Delivery</option>
+                                <option value="Delivered">Delivered</option>
+                            </select>
                         </div>
-
-                        <form id="updateStatusForm">
-                            <div class="form-group">
-                                <label for="newStatus">Update Status</label>
-                                <select id="newStatus" required>
-                                    <option value="">Select Status</option>
-                                    <option value="Pending Pickup">Pending Pickup</option>
-                                    <option value="Picked Up">Picked Up</option>
-                                    <option value="In Transit">In Transit</option>
-                                    <option value="Out for Delivery">Out for Delivery</option>
-                                    <option value="Delivered">Delivered</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="newLocation">Location</label>
-                                <input type="text" id="newLocation" placeholder="e.g., Chicago, IL" required>
-                            </div>
-
-                            <div class="modal-actions">
-                                <button type="button" class="btn btn-secondary" id="cancelUpdate">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Update Package</button>
-                            </div>
-                        </form>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="newLocation" placeholder="e.g. Vancouver, BC">
+                        </div>
+                        <button class="btn-submit" id="submitUpdate">Save</button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Maneigbbe Admin</h3>
-                    <p>Internal administration portal for Maneigbbe Delivery Service.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="admin.html">Dashboard</a></li>
-                        <li><a href="index.html">View Site</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Contact Support</h4>
-                    <p>777 Hornby Street Suite: 600, Vancouver, BC V6Z 1S4 Canada</p>
-                    <p>Tel: 604 569 9994</p>
-                    <p>Email: admin@maneiggbbe.com</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
             </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- CONFIRM DELETE MODAL -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="confirm-box">
+            <h3>Delete Package?</h3>
+            <p>This will permanently remove package <strong id="confirmTracking" style="color:#ef5350;"></strong> and cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="btn-cancel-confirm" id="cancelDelete">Cancel</button>
+                <button class="btn-confirm-delete" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
 
     <script src="js/admin.js"></script>
 </body>

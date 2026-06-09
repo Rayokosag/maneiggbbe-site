@@ -1,326 +1,292 @@
-// Admin Dashboard JavaScript
+const API = '/api';
 
-// API base URL
-const API_URL = '/api';
-
-// Get admin token for API calls
-function getAuthHeaders() {
-    const token = localStorage.getItem('adminToken');
+function authHeaders() {
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        'Authorization': 'Bearer ' + (localStorage.getItem('adminToken') || ''),
         'X-Requested-With': 'XMLHttpRequest'
     };
 }
 
-// Check if user is logged in
-function checkAuth() {
-    if (localStorage.getItem('adminLoggedIn') !== 'true' || !localStorage.getItem('adminToken')) {
-        window.location.href = 'login.html';
-        return false;
-    }
-    return true;
+// Auth guard
+if (localStorage.getItem('adminLoggedIn') !== 'true' || !localStorage.getItem('adminToken')) {
+    window.location.href = 'login.html';
 }
 
 // State
-let currentPage = 1;
-let currentStatus = '';
-let currentSearch = '';
-let totalPages = 1;
+let page = 1, totalPages = 1, statusFilter = '', searchQuery = '';
+let allPackages = [];
+let pendingDeleteTracking = null;
 
-// Initialize dashboard
-if (checkAuth()) {
-    loadDashboard();
-}
+// ── INIT ─────────────────────────────────────────────────────────────────────
+loadDashboard();
 
-// Logout functionality
-document.getElementById('logoutBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    if (confirm('Are you sure you want to logout?')) {
-        try {
-            await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-        localStorage.removeItem('adminLoggedIn');
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUsername');
-        localStorage.removeItem('loginTime');
-        window.location.href = 'login.html';
-    }
-});
-
-// Load dashboard data
+// ── LOAD ─────────────────────────────────────────────────────────────────────
 async function loadDashboard() {
     try {
-        const headers = getAuthHeaders();
-        const statusParam = currentStatus ? `&status=${encodeURIComponent(currentStatus)}` : '';
-
-        const [packagesRes, statsRes] = await Promise.all([
-            fetch(`${API_URL}/packages?page=${currentPage}&limit=20${statusParam}`, { headers }),
-            fetch(`${API_URL}/packages/stats`, { headers })
+        const statusParam = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : '';
+        const [pkgRes, statsRes] = await Promise.all([
+            fetch(`${API}/packages?page=${page}&limit=20${statusParam}`, { headers: authHeaders() }),
+            fetch(`${API}/packages/stats`, { headers: authHeaders() })
         ]);
 
-        if (packagesRes.status === 401 || packagesRes.status === 403) {
+        if (pkgRes.status === 401 || pkgRes.status === 403) {
             localStorage.removeItem('adminLoggedIn');
             localStorage.removeItem('adminToken');
             window.location.href = 'login.html';
             return;
         }
 
-        const packagesData = await packagesRes.json();
-        const stats = await statsRes.json();
+        const pkgData = await pkgRes.json();
+        const stats   = await statsRes.json();
 
-        updateStats(stats);
+        document.getElementById('statTotal').textContent    = stats.total    ?? '—';
+        document.getElementById('statPending').textContent  = stats.pending  ?? '—';
+        document.getElementById('statTransit').textContent  = stats.inTransit ?? '—';
+        document.getElementById('statDelivered').textContent= stats.delivered ?? '—';
 
-        // Handle paginated response format
-        const packages = packagesData.packages || packagesData;
-        const pagination = packagesData.pagination;
-        if (pagination) {
-            totalPages = pagination.totalPages;
-            currentPage = pagination.page;
+        allPackages = pkgData.packages || [];
+        if (pkgData.pagination) {
+            totalPages = pkgData.pagination.totalPages;
+            page       = pkgData.pagination.page;
         }
 
-        renderPackagesTable(packages);
+        renderTable();
         renderPagination();
-    } catch (error) {
-        console.error('Error loading dashboard:', error);
-        alert('Failed to load dashboard data');
+    } catch (err) {
+        console.error(err);
+        toast('Failed to load dashboard', 'error');
     }
 }
 
-// Update statistics
-function updateStats(stats) {
-    document.getElementById('totalPackages').textContent = stats.total;
-    document.getElementById('inTransit').textContent = stats.inTransit;
-    document.getElementById('delivered').textContent = stats.delivered;
-    document.getElementById('pending').textContent = stats.pending;
-}
+// ── RENDER TABLE ──────────────────────────────────────────────────────────────
+function renderTable() {
+    const q = searchQuery.toLowerCase();
+    const filtered = q ? allPackages.filter(p =>
+        p.trackingNumber.toLowerCase().includes(q) ||
+        p.sender.name.toLowerCase().includes(q) ||
+        p.recipient.name.toLowerCase().includes(q) ||
+        (p.sender.city || '').toLowerCase().includes(q) ||
+        (p.recipient.city || '').toLowerCase().includes(q)
+    ) : allPackages;
 
-// Render packages table
-function renderPackagesTable(packages) {
-    const tbody = document.getElementById('packagesTableBody');
-    const noPackages = document.getElementById('noPackages');
+    document.getElementById('resultsCount').textContent =
+        filtered.length + ' package' + (filtered.length !== 1 ? 's' : '');
 
-    // Apply client-side search filter
-    let filtered = packages;
-    if (currentSearch) {
-        const q = currentSearch.toLowerCase();
-        filtered = packages.filter(pkg =>
-            pkg.trackingNumber.toLowerCase().includes(q) ||
-            pkg.sender.name.toLowerCase().includes(q) ||
-            pkg.recipient.name.toLowerCase().includes(q) ||
-            (pkg.sender.city && pkg.sender.city.toLowerCase().includes(q)) ||
-            (pkg.recipient.city && pkg.recipient.city.toLowerCase().includes(q))
-        );
-    }
+    const tbody = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
 
     if (filtered.length === 0) {
         tbody.innerHTML = '';
-        noPackages.style.display = 'block';
+        empty.style.display = 'block';
         return;
     }
-
-    noPackages.style.display = 'none';
-
-    // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+    empty.style.display = 'none';
 
     tbody.innerHTML = filtered.map(pkg => {
-        const statusClass = getStatusClass(pkg.status);
-        const date = new Date(pkg.requestDate).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-
-        return `
-            <tr>
-                <td><strong>${pkg.trackingNumber}</strong></td>
-                <td>${pkg.sender.name}</td>
-                <td>${pkg.recipient.name}</td>
-                <td><span class="status-badge ${statusClass}">${pkg.status}</span></td>
-                <td>${capitalize(pkg.package.speed)}</td>
-                <td>${date}</td>
-                <td>
-                    <button class="btn-icon" onclick="openUpdateModal('${pkg.trackingNumber}')" title="Update Status">
-                        ✏️
-                    </button>
-                    <button class="btn-icon" onclick="viewDetails('${pkg.trackingNumber}')" title="View Details">
-                        👁️
-                    </button>
-                    <button class="btn-icon btn-danger" onclick="deletePackage('${pkg.trackingNumber}')" title="Delete">
-                        🗑️
-                    </button>
-                </td>
-            </tr>
-        `;
+        const date = new Date(pkg.requestDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const badgeClass = statusBadge(pkg.status);
+        return `<tr>
+            <td><strong style="font-family:monospace;">${pkg.trackingNumber}</strong></td>
+            <td>
+                ${esc(pkg.sender.name)}
+                <div class="cell-sub">${esc(pkg.sender.city || '')}, ${esc(pkg.sender.zip || '')}</div>
+            </td>
+            <td>
+                ${esc(pkg.recipient.name)}
+                <div class="cell-sub">${esc(pkg.recipient.city || '')}, ${esc(pkg.recipient.zip || '')}</div>
+            </td>
+            <td><span class="badge ${badgeClass}">${pkg.status}</span></td>
+            <td style="text-transform:capitalize;">${pkg.package.speed}</td>
+            <td>${pkg.price || '—'}</td>
+            <td>${date}</td>
+            <td>
+                <div class="actions">
+                    <button class="btn-action btn-view"   onclick="openDetail('${pkg.trackingNumber}')">View</button>
+                    <button class="btn-action btn-update" onclick="openDetail('${pkg.trackingNumber}', true)">Update</button>
+                    <button class="btn-action btn-delete" onclick="askDelete('${pkg.trackingNumber}')">Delete</button>
+                </div>
+            </td>
+        </tr>`;
     }).join('');
 }
 
-// Render pagination controls
+// ── PAGINATION ────────────────────────────────────────────────────────────────
 function renderPagination() {
-    const container = document.getElementById('paginationControls');
-    if (!container) return;
-
-    if (totalPages <= 1) {
-        container.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-    html += `<button class="btn btn-small" onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>Prev</button>`;
+    const el = document.getElementById('pagination');
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+    let html = `<button class="btn-page" onclick="goPage(${page-1})" ${page<=1?'disabled':''}>← Prev</button>`;
     for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="btn btn-small ${i === currentPage ? 'btn-primary' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        html += `<button class="btn-page ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
     }
-    html += `<button class="btn btn-small" onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Next</button>`;
-    container.innerHTML = html;
+    html += `<button class="btn-page" onclick="goPage(${page+1})" ${page>=totalPages?'disabled':''}>Next →</button>`;
+    el.innerHTML = html;
 }
 
-function goToPage(page) {
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
+function goPage(p) {
+    if (p < 1 || p > totalPages) return;
+    page = p;
     loadDashboard();
 }
 
-// Get status class for styling
-function getStatusClass(status) {
-    const statusMap = {
-        'Pending Pickup': 'status-pending',
-        'Picked Up': 'status-picked',
-        'In Transit': 'status-transit',
-        'Out for Delivery': 'status-delivery',
-        'Delivered': 'status-delivered'
-    };
-    return statusMap[status] || '';
-}
-
-// Capitalize first letter
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// Refresh button
-document.getElementById('refreshBtn').addEventListener('click', function() {
-    loadDashboard();
-    this.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-        this.style.transform = 'rotate(0deg)';
-    }, 500);
-});
-
-// Search input handler
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        currentSearch = this.value.trim();
-        loadDashboard();
-    });
-}
-
-// Status filter handler
-const statusFilter = document.getElementById('statusFilter');
-if (statusFilter) {
-    statusFilter.addEventListener('change', function() {
-        currentStatus = this.value;
-        currentPage = 1;
-        loadDashboard();
-    });
-}
-
-// Update Modal Functions
-let currentTrackingNumber = null;
-
-async function openUpdateModal(trackingNumber) {
-    currentTrackingNumber = trackingNumber;
-
+// ── DETAIL MODAL ──────────────────────────────────────────────────────────────
+async function openDetail(trackingNumber, focusUpdate = false) {
     try {
-        const response = await fetch(`${API_URL}/packages/${trackingNumber}`);
-        const pkg = await response.json();
+        const res = await fetch(`${API}/packages/${trackingNumber}`, { headers: authHeaders() });
+        if (!res.ok) { toast('Package not found', 'error'); return; }
+        const pkg = await res.json();
 
-        if (!pkg) return;
+        document.getElementById('modalTracking').textContent    = trackingNumber;
+        document.getElementById('dSenderName').textContent      = pkg.sender.name || '—';
+        document.getElementById('dSenderPhone').textContent     = pkg.sender.phone || '—';
+        document.getElementById('dSenderEmail').textContent     = pkg.sender.email || '—';
+        document.getElementById('dSenderAddress').textContent   = pkg.sender.address || '—';
+        document.getElementById('dSenderCity').textContent      = (pkg.sender.city || '') + (pkg.sender.zip ? ', ' + pkg.sender.zip : '');
+        document.getElementById('dRecipientName').textContent   = pkg.recipient.name || '—';
+        document.getElementById('dRecipientPhone').textContent  = pkg.recipient.phone || '—';
+        document.getElementById('dRecipientEmail').textContent  = pkg.recipient.email || '—';
+        document.getElementById('dRecipientAddress').textContent= pkg.recipient.address || '—';
+        document.getElementById('dRecipientCity').textContent   = (pkg.recipient.city || '') + (pkg.recipient.zip ? ', ' + pkg.recipient.zip : '');
+        document.getElementById('dWeight').textContent          = pkg.package.weight ? pkg.package.weight + ' kg' : '—';
+        document.getElementById('dSpeed').textContent           = capitalize(pkg.package.speed || '—');
+        document.getElementById('dPrice').textContent           = pkg.price || '—';
+        document.getElementById('dExpected').textContent        = pkg.expectedDelivery || '—';
+        document.getElementById('dDesc').textContent            = pkg.package.description || '—';
+        document.getElementById('newStatus').value              = pkg.status;
+        document.getElementById('newLocation').value            = '';
 
-        document.getElementById('modalTrackingNumber').textContent = trackingNumber;
-        document.getElementById('modalFrom').textContent = `${pkg.sender.city}, ${pkg.sender.zip}`;
-        document.getElementById('modalTo').textContent = `${pkg.recipient.city}, ${pkg.recipient.zip}`;
-        document.getElementById('newStatus').value = pkg.status;
+        document.getElementById('submitUpdate').dataset.tracking = trackingNumber;
+        document.getElementById('detailModal').classList.add('open');
 
-        document.getElementById('updateModal').style.display = 'flex';
-    } catch (error) {
-        console.error('Error fetching package:', error);
+        if (focusUpdate) {
+            setTimeout(() => document.getElementById('newStatus').focus(), 100);
+        }
+    } catch (err) {
+        toast('Failed to load package', 'error');
     }
 }
 
-function closeUpdateModal() {
-    document.getElementById('updateModal').style.display = 'none';
-    document.getElementById('updateStatusForm').reset();
-    currentTrackingNumber = null;
+function closeDetail() {
+    document.getElementById('detailModal').classList.remove('open');
 }
 
-// Modal close button
-document.querySelector('.modal-close').addEventListener('click', closeUpdateModal);
-document.getElementById('cancelUpdate').addEventListener('click', closeUpdateModal);
-
-// Close modal when clicking outside
-document.getElementById('updateModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeUpdateModal();
-    }
+document.getElementById('closeDetail').addEventListener('click', closeDetail);
+document.getElementById('detailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDetail();
 });
 
-// Handle status update
-document.getElementById('updateStatusForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+// ── STATUS UPDATE ─────────────────────────────────────────────────────────────
+document.getElementById('submitUpdate').addEventListener('click', async function() {
+    const trackingNumber = this.dataset.tracking;
+    const status   = document.getElementById('newStatus').value;
+    const location = document.getElementById('newLocation').value.trim() || 'Distribution Center';
 
-    const newStatus = document.getElementById('newStatus').value;
-    const newLocation = document.getElementById('newLocation').value.trim();
-
-    if (!currentTrackingNumber) return;
+    if (!status) { toast('Please select a status', 'error'); return; }
 
     try {
-        const response = await fetch(`${API_URL}/packages/${currentTrackingNumber}`, {
+        const res = await fetch(`${API}/packages/${trackingNumber}`, {
             method: 'PUT',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                status: newStatus,
-                location: newLocation || 'Distribution Center'
-            })
+            headers: authHeaders(),
+            body: JSON.stringify({ status, location })
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to update package');
-        }
-
-        closeUpdateModal();
-        loadDashboard();
-        alert(`Package ${currentTrackingNumber} updated to: ${newStatus}`);
-    } catch (error) {
-        console.error('Error updating package:', error);
-        alert('Failed to update package. Please try again.');
+        if (!res.ok) throw new Error();
+        closeDetail();
+        await loadDashboard();
+        toast(`${trackingNumber} updated to "${status}"`, 'success');
+    } catch {
+        toast('Failed to update package', 'error');
     }
 });
 
-function viewDetails(trackingNumber) {
-    window.open(`tracking.html?track=${trackingNumber}`, '_blank');
+// ── DELETE ────────────────────────────────────────────────────────────────────
+function askDelete(trackingNumber) {
+    pendingDeleteTracking = trackingNumber;
+    document.getElementById('confirmTracking').textContent = trackingNumber;
+    document.getElementById('confirmModal').classList.add('open');
 }
 
-async function deletePackage(trackingNumber) {
-    if (confirm(`Are you sure you want to delete package ${trackingNumber}?`)) {
-        try {
-            const response = await fetch(`${API_URL}/packages/${trackingNumber}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
+document.getElementById('cancelDelete').addEventListener('click', function() {
+    pendingDeleteTracking = null;
+    document.getElementById('confirmModal').classList.remove('open');
+});
 
-            if (!response.ok) {
-                throw new Error('Failed to delete package');
-            }
-
-            loadDashboard();
-            alert(`Package ${trackingNumber} deleted successfully`);
-        } catch (error) {
-            console.error('Error deleting package:', error);
-            alert('Failed to delete package. Please try again.');
-        }
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        pendingDeleteTracking = null;
+        this.classList.remove('open');
     }
+});
+
+document.getElementById('confirmDelete').addEventListener('click', async function() {
+    if (!pendingDeleteTracking) return;
+    const tracking = pendingDeleteTracking;
+    document.getElementById('confirmModal').classList.remove('open');
+    pendingDeleteTracking = null;
+
+    try {
+        const res = await fetch(`${API}/packages/${tracking}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        if (!res.ok) throw new Error();
+        await loadDashboard();
+        toast(`Package ${tracking} deleted`, 'success');
+    } catch {
+        toast('Failed to delete package', 'error');
+    }
+});
+
+// ── FILTERS ───────────────────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        searchQuery = this.value.trim();
+        renderTable();
+    }, 200);
+});
+
+document.getElementById('statusFilter').addEventListener('change', function() {
+    statusFilter = this.value;
+    page = 1;
+    loadDashboard();
+});
+
+document.getElementById('refreshBtn').addEventListener('click', function() {
+    this.classList.add('spinning');
+    loadDashboard().finally(() => {
+        setTimeout(() => this.classList.remove('spinning'), 500);
+    });
+});
+
+// ── LOGOUT ────────────────────────────────────────────────────────────────────
+document.getElementById('logoutBtn').addEventListener('click', async function() {
+    try {
+        await fetch(`${API}/auth/logout`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    } catch {}
+    localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUsername');
+    window.location.href = 'login.html';
+});
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+    return { 'Pending Pickup': 'badge-pending', 'Picked Up': 'badge-picked',
+             'In Transit': 'badge-transit', 'Out for Delivery': 'badge-delivery',
+             'Delivered': 'badge-delivered' }[status] || '';
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    el.textContent = msg;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
 }
