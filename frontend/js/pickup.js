@@ -146,6 +146,8 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         document.getElementById('trackLink').href = 'tracking.html?track=' + data.trackingNumber;
         if (localStorage.getItem('customerToken')) {
             document.getElementById('dashboardLink').style.display = 'block';
+        } else {
+            document.getElementById('signupPrompt').style.display = 'block';
         }
         document.getElementById('successMessage').style.display = 'block';
 

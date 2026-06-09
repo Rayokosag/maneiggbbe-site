@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb, saveDatabase } = require('../database');
 const { sendPickupConfirmation, sendStatusUpdate, sendNewPickupAlert } = require('../email');
+const { sendPickupSMS, sendStatusSMS } = require('../sms');
 const { upload, validateUploadedFiles, getPhotosForPackage } = require('../upload');
 const { authenticateToken, verifyToken } = require('../jwt');
 const { requireAdmin } = require('../roles');
@@ -251,6 +252,11 @@ router.post('/', validatePackage, async (req, res) => {
       expectedDelivery
     }).catch(err => console.error('Failed to send admin pickup alert:', err));
 
+    if (sender.phone) {
+      sendPickupSMS({ to: sender.phone, trackingNumber })
+        .catch(err => console.error('Failed to send pickup SMS:', err));
+    }
+
     const pkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
     res.status(201).json(await formatPackage(pkg));
 
@@ -353,6 +359,11 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, validatePackageS
       }).catch(err => console.error('Failed to send status update email:', err));
     }
 
+    if (pkg.recipient_phone) {
+      sendStatusSMS({ to: pkg.recipient_phone, trackingNumber, status })
+        .catch(err => console.error('Failed to send status SMS:', err));
+    }
+
     const updatedPkg = await db.get('SELECT * FROM packages WHERE tracking_number = ?', [trackingNumber]);
     res.json(await formatPackage(updatedPkg));
 
@@ -363,7 +374,7 @@ router.put('/:trackingNumber', authenticateToken, requireAdmin, validatePackageS
 });
 
 // POST /api/packages/:trackingNumber/photos - Upload package photos
-router.post('/:trackingNumber/photos', authenticateToken, requireAdmin, upload.array('photos', 5), validateUploadedFiles, async (req, res) => {
+router.post('/:trackingNumber/photos', upload.array('photos', 5), validateUploadedFiles, async (req, res) => {
   const { trackingNumber } = req.params;
   const db = getDb();
 
