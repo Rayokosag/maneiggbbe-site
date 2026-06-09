@@ -143,6 +143,10 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
         // Hide form and show success message
         document.getElementById('pickupForm').style.display = 'none';
         document.getElementById('generatedTrackingNumber').textContent = data.trackingNumber;
+        document.getElementById('trackLink').href = 'tracking.html?track=' + data.trackingNumber;
+        if (localStorage.getItem('customerToken')) {
+            document.getElementById('dashboardLink').style.display = 'block';
+        }
         document.getElementById('successMessage').style.display = 'block';
 
         // Scroll to success message
