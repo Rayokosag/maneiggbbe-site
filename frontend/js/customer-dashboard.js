@@ -87,8 +87,7 @@ async function loadProfile() {
 
         if (data.isGoogleUser) {
             document.getElementById('googleBadge').style.display = 'inline-flex';
-            document.getElementById('googlePasswordInfo').style.display = 'block';
-            document.getElementById('regularPasswordForm').style.display = 'none';
+            document.getElementById('passwordTabBtn').style.display = 'none';
         }
     } catch (err) {
         console.error('Error loading profile:', err);
