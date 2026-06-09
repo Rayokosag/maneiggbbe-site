@@ -124,7 +124,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
-      createdAt: customer.created_at
+      createdAt: customer.created_at,
+      isGoogleUser: !customer.password_hash && !!customer.google_id
     });
   } catch (error) {
     console.error('Error fetching profile:', error);

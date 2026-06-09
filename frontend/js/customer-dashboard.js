@@ -1,5 +1,3 @@
-// Customer Dashboard JavaScript
-
 const API_URL = '/api';
 
 function getToken() {
@@ -14,7 +12,6 @@ function getAuthHeaders() {
     };
 }
 
-// Auth check
 if (!getToken()) {
     window.location.href = 'customer-login.html';
 } else {
@@ -22,18 +19,24 @@ if (!getToken()) {
 }
 
 async function init() {
-    // Set name from localStorage first
     const storedName = localStorage.getItem('customerName');
     if (storedName) {
         document.getElementById('customerName').textContent = storedName;
+        setAvatar(storedName);
     }
 
-    // Load profile, stats, and packages in parallel
-    await Promise.all([
-        loadProfile(),
-        loadStats(),
-        loadPackages()
-    ]);
+    await Promise.all([loadProfile(), loadStats(), loadPackages()]);
+
+    // Hash-based tab switch (e.g. #profile from navbar)
+    var hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById('tab-' + hash)) {
+        switchTab(hash);
+    }
+}
+
+function setAvatar(name) {
+    var initials = name.trim().split(' ').map(function(w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
+    document.getElementById('userAvatar').textContent = initials || '?';
 }
 
 // Tab navigation
@@ -52,12 +55,6 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     });
 });
 
-// Hash-based tab switching (e.g. #profile from navbar dropdown)
-var hash = window.location.hash.replace('#', '');
-if (hash && document.getElementById('tab-' + hash)) {
-    switchTab(hash);
-}
-
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', function() {
     localStorage.removeItem('customerToken');
@@ -75,11 +72,24 @@ async function loadProfile() {
             return;
         }
         const data = await res.json();
+
         document.getElementById('customerName').textContent = data.name;
         document.getElementById('profileName').value = data.name;
         document.getElementById('profileEmail').value = data.email;
         document.getElementById('profilePhone').value = data.phone || '';
         localStorage.setItem('customerName', data.name);
+        setAvatar(data.name);
+
+        if (data.createdAt) {
+            var since = new Date(data.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            document.getElementById('memberSince').textContent = 'Member since ' + since;
+        }
+
+        if (data.isGoogleUser) {
+            document.getElementById('googleBadge').style.display = 'inline-flex';
+            document.getElementById('googlePasswordInfo').style.display = 'block';
+            document.getElementById('regularPasswordForm').style.display = 'none';
+        }
     } catch (err) {
         console.error('Error loading profile:', err);
     }
@@ -119,16 +129,14 @@ async function loadPackages() {
         noData.style.display = 'none';
         tbody.innerHTML = packages.map(function(pkg) {
             var statusClass = getStatusClass(pkg.status);
-            var date = new Date(pkg.requestDate).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric'
-            });
+            var date = new Date(pkg.requestDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             return '<tr>' +
                 '<td><strong>' + pkg.trackingNumber + '</strong></td>' +
                 '<td>' + pkg.from + '</td>' +
                 '<td>' + pkg.to + '</td>' +
                 '<td><span class="status-badge ' + statusClass + '">' + pkg.status + '</span></td>' +
                 '<td>' + date + '</td>' +
-                '<td><a href="tracking.html?track=' + pkg.trackingNumber + '" class="track-link">Track</a></td>' +
+                '<td><a href="tracking.html?track=' + pkg.trackingNumber + '" class="track-link">Track →</a></td>' +
                 '</tr>';
         }).join('');
     } catch (err) {
@@ -169,6 +177,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
             msg.className = 'form-message form-message-success';
             msg.textContent = 'Profile updated successfully';
             document.getElementById('customerName').textContent = data.name;
+            setAvatar(data.name);
             localStorage.setItem('customerName', data.name);
         } else {
             msg.className = 'form-message form-message-error';
@@ -177,7 +186,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
         msg.style.display = 'block';
     } catch (err) {
         msg.className = 'form-message form-message-error';
-        msg.textContent = 'Connection error';
+        msg.textContent = 'Connection error. Please try again.';
         msg.style.display = 'block';
     }
 });
@@ -220,26 +229,7 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
         msg.style.display = 'block';
     } catch (err) {
         msg.className = 'form-message form-message-error';
-        msg.textContent = 'Connection error';
+        msg.textContent = 'Connection error. Please try again.';
         msg.style.display = 'block';
     }
-});
-
-// Bulk Upload Form
-document.getElementById('bulkUploadForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const csvFile = document.getElementById('csvFile').files[0];
-    if (csvFile) {
-        alert(`Simulating CSV upload for file: ${csvFile.name}. This would typically be sent to a backend API.`);
-        console.log('Bulk upload file:', csvFile);
-        // In a real application, you would send this file to a backend API
-    } else {
-        alert('Please select a CSV file to upload.');
-    }
-});
-
-// Message Account Manager Button
-document.querySelector('#tab-contact-manager .btn-save').addEventListener('click', function() {
-    alert('Simulating sending a message to your Account Manager. This would typically open a chat or email client.');
-    console.log('Message Account Manager clicked.');
 });

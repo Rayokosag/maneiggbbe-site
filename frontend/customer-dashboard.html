@@ -19,70 +19,155 @@
             max-width: 1100px;
             margin: 0 auto;
         }
-        .dashboard-header {
+        /* Header */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
             margin-bottom: 2rem;
         }
-        .dashboard-header h2 {
-            font-size: 1.8rem;
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #42a5f5, #7e57c2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .header-user h2 {
+            font-size: 1.5rem;
             color: #fff;
         }
-        .dashboard-header p {
+        .header-user p {
             color: #999;
+            font-size: 0.9rem;
         }
+        .google-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #1e2a3a;
+            color: #90caf9;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            border: 1px solid #2a3f5a;
+            margin-top: 0.2rem;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid #444;
+            color: #999;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .logout-btn:hover { color: #fff; border-color: #fff; }
         /* Stats */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
         }
         .stat-card-dash {
             background: #1e1e1e;
             border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            border: 1px solid #333;
+            padding: 1.25rem 1.5rem;
+            border: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
+        .stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .stat-icon-total { background: #1a2a3a; }
+        .stat-icon-transit { background: #1a2f3a; }
+        .stat-icon-delivered { background: #1a3a1a; }
+        .stat-icon-pending { background: #3a2f00; }
         .stat-card-dash .stat-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: #fff;
+            line-height: 1;
         }
         .stat-card-dash .stat-label {
-            color: #999;
-            font-size: 0.9rem;
-            margin-top: 0.25rem;
+            color: #777;
+            font-size: 0.8rem;
+            margin-top: 0.2rem;
         }
+        /* Quick actions */
+        .quick-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .quick-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .quick-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .quick-btn-primary { background: #fff; color: #1a1a1a; }
+        .quick-btn-secondary { background: #1e1e1e; color: #e0e0e0; border: 1px solid #333; }
         /* Tabs */
         .tab-nav {
             display: flex;
             gap: 0;
             margin-bottom: 1.5rem;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #2a2a2a;
+            overflow-x: auto;
         }
         .tab-btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             background: none;
             border: none;
-            color: #999;
-            font-size: 1rem;
+            color: #777;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             border-bottom: 2px solid transparent;
             margin-bottom: -2px;
             transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
         }
-        .tab-btn:hover { color: #fff; }
-        .tab-btn.active {
-            color: #fff;
-            border-bottom-color: #fff;
-        }
+        .tab-btn:hover { color: #ccc; }
+        .tab-btn.active { color: #fff; border-bottom-color: #fff; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         /* Table */
-        .table-container {
-            overflow-x: auto;
-        }
+        .table-container { overflow-x: auto; }
         .packages-table {
             width: 100%;
             border-collapse: collapse;
@@ -92,24 +177,25 @@
         }
         .packages-table th,
         .packages-table td {
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1rem;
             text-align: left;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #2a2a2a;
         }
         .packages-table th {
-            background: #2a2a2a;
-            color: #999;
-            font-size: 0.85rem;
+            background: #242424;
+            color: #777;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .packages-table td { color: #e0e0e0; }
-        .packages-table tr:hover { background: #252525; }
+        .packages-table tbody tr:last-child td { border-bottom: none; }
+        .packages-table tr:hover td { background: #242424; }
         .status-badge {
             display: inline-block;
-            padding: 0.3rem 0.8rem;
+            padding: 0.25rem 0.75rem;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
         }
         .status-pending { background: #3a2f00; color: #f5c518; }
@@ -121,45 +207,54 @@
             color: #90caf9;
             text-decoration: none;
             font-weight: 600;
+            font-size: 0.85rem;
         }
         .track-link:hover { text-decoration: underline; }
         .no-data {
             text-align: center;
             padding: 3rem;
-            color: #666;
+            color: #555;
         }
-        /* Profile Form */
-        .profile-form {
-            max-width: 500px;
+        .no-data p { margin-bottom: 0.5rem; }
+        /* Forms */
+        .profile-card {
+            max-width: 520px;
             background: #1e1e1e;
             border-radius: 12px;
             padding: 2rem;
-            border: 1px solid #333;
+            border: 1px solid #2a2a2a;
         }
-        .form-group {
-            margin-bottom: 1.25rem;
+        .profile-card h3 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 1.5rem;
         }
+        .form-group { margin-bottom: 1.25rem; }
         .form-group label {
             display: block;
             margin-bottom: 0.4rem;
             font-weight: 600;
-            color: #ccc;
-            font-size: 0.9rem;
+            color: #aaa;
+            font-size: 0.85rem;
         }
         .form-group input {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 2px solid #444;
+            border: 1.5px solid #333;
             border-radius: 8px;
             font-size: 1rem;
             background: #2a2a2a;
             color: #e0e0e0;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s;
         }
         .form-group input:focus {
             outline: none;
             border-color: #90caf9;
-            box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.15);
+            box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.1);
+        }
+        .form-group input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .btn-save {
             padding: 0.75rem 2rem;
@@ -167,46 +262,42 @@
             color: #1a1a1a;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
         .btn-save:hover {
             transform: translateY(-1px);
-            box-shadow: 0 3px 12px rgba(255,255,255,0.2);
+            box-shadow: 0 4px 14px rgba(255,255,255,0.15);
         }
         .form-message {
-            padding: 0.6rem 1rem;
+            padding: 0.65rem 1rem;
             border-radius: 8px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             font-size: 0.9rem;
         }
-        .form-message-success { background: #1a3a1a; color: #66bb6a; }
-        .form-message-error { background: #3a1a1a; color: #ef5350; }
-        /* Logout */
-        .logout-btn {
-            background: none;
-            border: 1px solid #666;
-            color: #999;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: color 0.2s, border-color 0.2s;
-        }
-        .logout-btn:hover { color: #fff; border-color: #fff; }
-        .header-row {
+        .form-message-success { background: #1a3a1a; color: #66bb6a; border: 1px solid #2a5a2a; }
+        .form-message-error { background: #3a1a1a; color: #ef5350; border: 1px solid #5a2a2a; }
+        /* Google user info box */
+        .info-box {
+            background: #1a2535;
+            border: 1px solid #2a3f5a;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #90caf9;
         }
+        .info-box-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .info-box a { color: #64b5f6; font-weight: 600; text-decoration: none; }
+        .info-box a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
             <div class="logo">
@@ -250,10 +341,24 @@
     </nav>
 
     <section class="dashboard-section">
-        <div class="header-row dashboard-header">
-            <div>
-                <h2>Welcome, <span id="customerName">Customer</span></h2>
-                <p>Manage your shipments and account</p>
+
+        <!-- Header -->
+        <div class="header-row">
+            <div class="header-user">
+                <div class="avatar" id="userAvatar">?</div>
+                <div>
+                    <h2>Welcome, <span id="customerName">Customer</span></h2>
+                    <p id="memberSince" style="color:#666; font-size:0.85rem;"></p>
+                    <span class="google-badge" id="googleBadge" style="display:none;">
+                        <svg width="12" height="12" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Signed in with Google
+                    </span>
+                </div>
             </div>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
@@ -261,32 +366,46 @@
         <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card-dash">
-                <div class="stat-value" id="statTotal">0</div>
-                <div class="stat-label">Total Packages</div>
+                <div class="stat-icon stat-icon-total">📦</div>
+                <div>
+                    <div class="stat-value" id="statTotal">—</div>
+                    <div class="stat-label">Total Packages</div>
+                </div>
             </div>
             <div class="stat-card-dash">
-                <div class="stat-value" id="statTransit">0</div>
-                <div class="stat-label">In Transit</div>
+                <div class="stat-icon stat-icon-transit">🚚</div>
+                <div>
+                    <div class="stat-value" id="statTransit">—</div>
+                    <div class="stat-label">In Transit</div>
+                </div>
             </div>
             <div class="stat-card-dash">
-                <div class="stat-value" id="statDelivered">0</div>
-                <div class="stat-label">Delivered</div>
+                <div class="stat-icon stat-icon-delivered">✅</div>
+                <div>
+                    <div class="stat-value" id="statDelivered">—</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
             </div>
             <div class="stat-card-dash">
-                <div class="stat-value" id="statPending">0</div>
-                <div class="stat-label">Pending</div>
+                <div class="stat-icon stat-icon-pending">⏳</div>
+                <div>
+                    <div class="stat-value" id="statPending">—</div>
+                    <div class="stat-label">Pending</div>
+                </div>
             </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="request-pickup.html" class="quick-btn quick-btn-primary">+ Request Pickup</a>
+            <a href="tracking.html" class="quick-btn quick-btn-secondary">🔍 Track a Package</a>
         </div>
 
         <!-- Tabs -->
         <div class="tab-nav">
             <button class="tab-btn active" data-tab="packages">My Packages</button>
             <button class="tab-btn" data-tab="profile">Profile</button>
-            <button class="tab-btn" data-tab="password">Change Password</button>
-            <button class="tab-btn" data-tab="bulk-upload">Bulk Upload</button>
-            <button class="tab-btn" data-tab="invoices">Invoices</button>
-            <button class="tab-btn" data-tab="reports">Reports</button>
-            <button class="tab-btn" data-tab="contact-manager">Contact Manager</button>
+            <button class="tab-btn" id="passwordTabBtn" data-tab="password">Change Password</button>
         </div>
 
         <!-- Packages Tab -->
@@ -303,19 +422,21 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody id="packagesBody">
-                    </tbody>
+                    <tbody id="packagesBody"></tbody>
                 </table>
                 <div id="noPackages" class="no-data" style="display: none;">
-                    <p>No packages yet.</p>
-                    <p style="margin-top: 0.5rem;"><a href="request-pickup.html" class="track-link">Request a Pickup</a></p>
+                    <p style="font-size:1.1rem; color:#666;">No packages yet</p>
+                    <p style="margin-top: 0.75rem;">
+                        <a href="request-pickup.html" class="quick-btn quick-btn-primary" style="display:inline-flex;">+ Request your first pickup</a>
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Profile Tab -->
         <div id="tab-profile" class="tab-content">
-            <div class="profile-form">
+            <div class="profile-card">
+                <h3>Profile Information</h3>
                 <div id="profileMsg" class="form-message" style="display: none;"></div>
                 <form id="profileForm">
                     <div class="form-group">
@@ -328,7 +449,7 @@
                     </div>
                     <div class="form-group">
                         <label for="profilePhone">Phone</label>
-                        <input type="tel" id="profilePhone">
+                        <input type="tel" id="profilePhone" placeholder="Optional">
                     </div>
                     <button type="submit" class="btn-save">Save Changes</button>
                 </form>
@@ -337,94 +458,48 @@
 
         <!-- Password Tab -->
         <div id="tab-password" class="tab-content">
-            <div class="profile-form">
-                <div id="passwordMsg" class="form-message" style="display: none;"></div>
-                <form id="passwordForm">
-                    <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" minlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmNewPassword">Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" required>
-                    </div>
-                    <button type="submit" class="btn-save">Update Password</button>
-                </form>
-            </div>
-        </div>
+            <div class="profile-card">
+                <h3>Change Password</h3>
 
-        <!-- Bulk Upload Tab -->
-        <div id="tab-bulk-upload" class="tab-content">
-            <div class="profile-form">
-                <h3>Bulk Upload Shipments</h3>
-                <p style="color: #ccc; margin-bottom: 1rem;">Upload a CSV file to create multiple shipments at once.</p>
-                <form id="bulkUploadForm">
-                    <div class="form-group">
-                        <label for="csvFile">Select CSV File</label>
-                        <input type="file" id="csvFile" accept=".csv" required>
+                <!-- Shown for Google users -->
+                <div id="googlePasswordInfo" style="display:none;">
+                    <div class="info-box">
+                        <span class="info-box-icon">ℹ️</span>
+                        <div>
+                            Your account is linked to Google Sign-In and doesn't have a separate password.
+                            To set one, use the <a href="forgot-password.html">Forgot Password</a> page and enter your email.
+                        </div>
                     </div>
-                    <button type="submit" class="btn-save">Upload CSV</button>
-                </form>
-                <p style="color: #666; margin-top: 1.5rem;">
-                    <a href="#" style="color: #90caf9; text-decoration: none;">Download CSV Template</a>
-                </p>
-            </div>
-        </div>
-
-        <!-- Invoices Tab -->
-        <div id="tab-invoices" class="tab-content">
-            <div class="profile-form">
-                <h3>Invoice Downloads</h3>
-                <p style="color: #ccc; margin-bottom: 1rem;">Download your monthly and yearly invoices.</p>
-                <p style="color: #ffcc00; font-size: 0.9rem; margin-bottom: 1rem;">
-                    <em>(Note: This is a simulated feature. Actual invoice generation and download require backend integration.)</em>
-                </p>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 0.8rem;"><a href="javascript:alert('Simulating download of Invoice_2024_01.pdf');" style="color: #90caf9; text-decoration: none;">Invoice_2024_01.pdf</a> (Jan 2024)</li>
-                    <li style="margin-bottom: 0.8rem;"><a href="javascript:alert('Simulating download of Invoice_2023_12.pdf');" style="color: #90caf9; text-decoration: none;">Invoice_2023_12.pdf</a> (Dec 2023)</li>
-                    <li style="margin-bottom: 0.8rem;"><a href="javascript:alert('Simulating download of Invoice_2023_Full_Year.pdf');" style="color: #90caf9; text-decoration: none;">Invoice_2023_Full_Year.pdf</a> (2023 Annual)</li>
-                </ul>
-                <button class="btn-save" style="margin-top: 1.5rem;" onclick="alert('Simulating bulk download of all invoices.');">Download All Invoices</button>
-            </div>
-        </div>
-
-        <!-- Reports Tab -->
-        <div id="tab-reports" class="tab-content">
-            <div class="profile-form">
-                <h3>Billing Reports</h3>
-                <p style="color: #ccc; margin-bottom: 1rem;">View detailed reports on your spending and shipping patterns.</p>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Monthly Spending Report (Q1 2024)</a></li>
-                    <li style="margin-bottom: 0.8rem;"><a href="#" style="color: #90caf9; text-decoration: none;">Shipment Volume by Destination (2023)</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Contact Manager Tab -->
-        <div id="tab-contact-manager" class="tab-content">
-            <div class="profile-form">
-                <h3>Account Manager</h3>
-                <p style="color: #ccc; margin-bottom: 1rem;">Your dedicated account manager is here to help.</p>
-                <div style="margin-bottom: 1rem;">
-                    <p style="font-weight: bold; color: #fff;">Name: John Smith</p>
-                    <p style="color: #ccc;">Email: admin@maneiggbbe.com</p>
-                    <p style="color: #ccc;">Phone: 604 569 9994</p>
                 </div>
-                <button class="btn-save">Message Account Manager</button>
+
+                <!-- Shown for regular users -->
+                <div id="regularPasswordForm">
+                    <div id="passwordMsg" class="form-message" style="display: none;"></div>
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" minlength="8" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" required>
+                        </div>
+                        <button type="submit" class="btn-save">Update Password</button>
+                    </form>
+                </div>
             </div>
         </div>
+
     </section>
 
-    <footer style="background: #0a0a0a; text-align: center; padding: 2rem; color: #666; font-size: 0.85rem;">
-        <div style="margin-bottom: 1rem;">
-            <p>777 Hornby Street Suite: 600, Vancouver, BC V6Z 1S4 Canada</p>
-            <p>Tel: 604 569 9994 | Email: admin@maneiggbbe.com</p>
-        </div>
-        <p>&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
+    <footer style="background: #0a0a0a; text-align: center; padding: 2rem; color: #555; font-size: 0.85rem; border-top: 1px solid #1a1a1a;">
+        <p>777 Hornby Street Suite: 600, Vancouver, BC V6Z 1S4 Canada</p>
+        <p style="margin-top:0.25rem;">Tel: 604 569 9994 | Email: admin@maneiggbbe.com</p>
+        <p style="margin-top:0.75rem;">&copy; 2026 Maneigbbe Delivery. All rights reserved.</p>
     </footer>
 
     <script src="js/navbar.js"></script>
