@@ -20,6 +20,7 @@ let pendingDeleteTracking = null;
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 loadDashboard();
+loadCharts();
 
 // ── LOAD ─────────────────────────────────────────────────────────────────────
 async function loadDashboard() {
@@ -406,4 +407,82 @@ function toast(msg, type = 'success') {
     el.textContent = msg;
     document.getElementById('toast-container').appendChild(el);
     setTimeout(() => el.remove(), 3500);
+}
+
+// ── ANALYTICS CHARTS ─────────────────────────────────────────────────────────
+let dailyChartInstance = null;
+let statusChartInstance = null;
+
+async function loadCharts() {
+    try {
+        const res = await fetch(`${API}/packages/analytics`, { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        renderDailyChart(data.dailyPackages);
+        renderStatusChart(data.statusBreakdown);
+    } catch (err) {
+        console.error('Failed to load analytics:', err);
+    }
+}
+
+function renderDailyChart(dailyPackages) {
+    const labels = dailyPackages.map(d => {
+        const date = new Date(d.date + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const counts = dailyPackages.map(d => d.count);
+
+    if (dailyChartInstance) dailyChartInstance.destroy();
+    dailyChartInstance = new Chart(document.getElementById('dailyChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Packages',
+                data: counts,
+                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                borderColor: '#667eea',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderStatusChart(statusBreakdown) {
+    const statusColors = {
+        'Pending Pickup': '#f0ad4e',
+        'Picked Up':      '#5bc0de',
+        'In Transit':     '#667eea',
+        'Out for Delivery': '#fd7e14',
+        'Delivered':      '#28a745'
+    };
+
+    const labels = statusBreakdown.map(s => s.status);
+    const counts = statusBreakdown.map(s => s.count);
+    const colors = labels.map(l => statusColors[l] || '#aaa');
+
+    if (statusChartInstance) statusChartInstance.destroy();
+    statusChartInstance = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{ data: counts, backgroundColor: colors, borderWidth: 2 }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } }
+            }
+        }
+    });
 }

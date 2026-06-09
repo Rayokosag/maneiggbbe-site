@@ -527,6 +527,18 @@
             </div>
         </div>
 
+        <!-- Analytics Charts -->
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px;">
+            <div style="background:#fff; border-radius:12px; padding:20px; border:1px solid #eee;">
+                <div style="font-size:0.8rem; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; font-weight:700;">Packages — Last 7 Days</div>
+                <canvas id="dailyChart" height="100"></canvas>
+            </div>
+            <div style="background:#fff; border-radius:12px; padding:20px; border:1px solid #eee;">
+                <div style="font-size:0.8rem; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; font-weight:700;">Status Breakdown</div>
+                <canvas id="statusChart" height="180"></canvas>
+            </div>
+        </div>
+
         <!-- Filters -->
         <div class="filters-bar">
             <div class="search-wrap">
@@ -698,6 +710,7 @@
     <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

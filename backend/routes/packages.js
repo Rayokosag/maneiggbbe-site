@@ -125,6 +125,44 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/packages/analytics - Chart data (admin only)
+router.get('/analytics', authenticateToken, requireAdmin, async (req, res) => {
+  const db = getDb();
+
+  try {
+    // Last 7 days — build date labels first so days with 0 packages still appear
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+
+    const dailyRows = await db.all(
+      `SELECT substr(request_date, 1, 10) as day, COUNT(*) as count
+       FROM packages
+       WHERE substr(request_date, 1, 10) >= ?
+       GROUP BY day`,
+      [days[0]]
+    );
+
+    const dailyMap = {};
+    dailyRows.forEach(r => { dailyMap[r.day] = r.count; });
+
+    const dailyPackages = days.map(d => ({ date: d, count: dailyMap[d] || 0 }));
+
+    // Status breakdown
+    const statusRows = await db.all(
+      `SELECT status, COUNT(*) as count FROM packages GROUP BY status`
+    );
+
+    res.json({ dailyPackages, statusBreakdown: statusRows });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
 // GET /api/packages/:trackingNumber - Get single package
 router.get('/:trackingNumber', async (req, res) => {
   const db = getDb();
