@@ -107,6 +107,37 @@ function calculateDistance(fromZip, toZip) {
   };
 }
 
+// Routing engine (OSRM). The public demo server is fine for development but its
+// usage policy PROHIBITS commercial/heavy use. For production, self-host OSRM
+// with the BC Geofabrik extract (Docker) and set OSRM_URL to your instance.
+const OSRM_URL = (process.env.OSRM_URL || 'https://router.project-osrm.org').replace(/\/$/, '');
+
+// Fetch the real road route between two coordinates.
+// Returns { distanceKm, durationMin, geometry } or null if routing fails.
+async function getRoadRoute(fromLat, fromLng, toLat, toLng) {
+  const coords = `${fromLng},${fromLat};${toLng},${toLat}`;
+  const url = `${OSRM_URL}/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes || !data.routes.length) return null;
+    const route = data.routes[0];
+    return {
+      distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+      durationMin: Math.round(route.duration / 60),
+      geometry: route.geometry // GeoJSON LineString for drawing on the map
+    };
+  } catch (err) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function calculatePrice(distanceKm, weightLbs, speed) {
   const RATE_PER_KM = 0.20;
   const RATE_PER_LB = 0.25;
@@ -135,5 +166,6 @@ module.exports = {
   lookupPostalCode,
   calculateDistance,
   calculatePrice,
-  normalizePostalCode
+  normalizePostalCode,
+  getRoadRoute
 };

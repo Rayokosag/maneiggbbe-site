@@ -50,8 +50,16 @@ function calculatePrice() {
         totalPrice += packagingPrices[packaging];
     }
 
+    // Add distance cost ($0.20/km) once both map pins are set (see map-pickup.js)
+    const roadKm = window.roadDistanceKm || 0;
+    if (roadKm > 0) {
+        totalPrice += roadKm * 0.20;
+    }
+
     document.getElementById('estimatedPrice').textContent = `$${totalPrice.toFixed(2)}`;
 }
+// Let map-pickup.js trigger a recalculation when the route changes
+window.calculatePrice = calculatePrice;
 
 // Handle form submission
 document.getElementById('pickupForm').addEventListener('submit', async function(e) {
@@ -98,7 +106,12 @@ document.getElementById('pickupForm').addEventListener('submit', async function(
             packagingCost: packagingPrices[packagingOption]
         },
         price: document.getElementById('estimatedPrice').textContent,
-        expectedDelivery: calculateExpectedDelivery(document.getElementById('deliverySpeed').value)
+        expectedDelivery: calculateExpectedDelivery(document.getElementById('deliverySpeed').value),
+        // Route data from the map (see map-pickup.js); null if pins weren't set
+        distanceKm: window.roadDistanceKm || null,
+        etaMinutes: window.roadEtaMinutes || null,
+        pickupCoords: window.pickupCoords || null,
+        dropoffCoords: window.dropoffCoords || null
     };
 
     // Build headers - include customer auth if logged in

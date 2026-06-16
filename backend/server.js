@@ -39,9 +39,12 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'"]
+      styleSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net"],
+      // Map tiles (OSM by default; MapTiler/Carto allowed for the prod swap)
+      imgSrc: ["'self'", "data:", "blob:", "cdn.jsdelivr.net",
+        "*.tile.openstreetmap.org", "*.basemaps.cartocdn.com", "api.maptiler.com"],
+      // Geocoding/autocomplete called directly from the browser
+      connectSrc: ["'self'", "nominatim.openstreetmap.org", "api.maptiler.com", "api.geoapify.com"]
     }
   },
   crossOriginEmbedderPolicy: false

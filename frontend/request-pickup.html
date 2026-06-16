@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Pickup - Maneigbbe</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <style>
         * {
             margin: 0;
@@ -443,6 +444,24 @@
                     </div>
                 </div>
 
+                <!-- Route Map -->
+                <div class="form-section full-width">
+                    <h3>Pickup & Delivery Locations</h3>
+                    <p style="color:#666;margin-bottom:1rem;font-size:0.9rem;">Type an address above (or drag the pins) to set the route. We serve the Greater Vancouver area only.</p>
+                    <div id="routeMap" style="height:380px;border-radius:10px;overflow:hidden;border:2px solid #e0e0e0;"></div>
+                    <div id="routeError" style="display:none;margin-top:0.75rem;color:#c62828;font-size:0.9rem;"></div>
+                    <div id="routeInfo" style="display:none;margin-top:1rem;gap:1rem;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:120px;background:#f5f5f5;border-radius:8px;padding:0.75rem 1rem;text-align:center;">
+                            <div style="font-size:1.4rem;font-weight:bold;color:#1a1a1a;" id="routeDistance">—</div>
+                            <div style="font-size:0.8rem;color:#666;">Road distance</div>
+                        </div>
+                        <div style="flex:1;min-width:120px;background:#f5f5f5;border-radius:8px;padding:0.75rem 1rem;text-align:center;">
+                            <div style="font-size:1.4rem;font-weight:bold;color:#1a1a1a;" id="routeEta">—</div>
+                            <div style="font-size:0.8rem;color:#666;">Est. drive time</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-grid">
                     <!-- Package Information -->
                     <div class="form-section">
@@ -585,7 +604,10 @@
     </footer>
 
     <script src="js/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-geosearch@3.11.1/dist/bundle.min.js"></script>
     <script src="js/pickup.js"></script>
+    <script src="js/map-pickup.js"></script>
     <script>
         // Custom file list so individual photos can be removed
         window.selectedFiles = [];

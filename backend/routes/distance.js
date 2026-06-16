@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { lookupPostalCode, calculateDistance, calculatePrice } = require('../distance');
+const { lookupPostalCode, calculateDistance, calculatePrice, getRoadRoute } = require('../distance');
 const { validateDistanceCalc } = require('../validation');
+
+// Greater Vancouver service-area bounding box. Keep in sync with the map's
+// search viewbox in frontend/js/map-pickup.js.
+const SERVICE_AREA = { minLat: 49.0, maxLat: 49.45, minLng: -123.35, maxLng: -122.5 };
+
+function inServiceArea(lat, lng) {
+  return lat >= SERVICE_AREA.minLat && lat <= SERVICE_AREA.maxLat &&
+    lng >= SERVICE_AREA.minLng && lng <= SERVICE_AREA.maxLng;
+}
 
 // GET /api/distance?from=V6B&to=V5K
 router.get('/', (req, res) => {
@@ -46,6 +55,30 @@ router.post('/calculate-price', validateDistanceCalc, (req, res) => {
     speed: speed || 'standard',
     pricing
   });
+});
+
+// POST /api/distance/route  { from: {lat,lng}, to: {lat,lng} }
+// Returns real road distance + duration (ETA) + route geometry from OSRM.
+router.post('/route', async (req, res) => {
+  const { from, to } = req.body || {};
+  const valid = from && to &&
+    typeof from.lat === 'number' && typeof from.lng === 'number' &&
+    typeof to.lat === 'number' && typeof to.lng === 'number';
+
+  if (!valid) {
+    return res.status(400).json({ error: 'from {lat,lng} and to {lat,lng} are required' });
+  }
+
+  if (!inServiceArea(from.lat, from.lng) || !inServiceArea(to.lat, to.lng)) {
+    return res.status(400).json({ error: 'Both locations must be within the Greater Vancouver service area' });
+  }
+
+  const route = await getRoadRoute(from.lat, from.lng, to.lat, to.lng);
+  if (!route) {
+    return res.status(502).json({ error: 'Routing service unavailable, please try again' });
+  }
+
+  res.json(route);
 });
 
 module.exports = router;
