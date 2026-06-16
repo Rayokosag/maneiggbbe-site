@@ -99,6 +99,20 @@ async function initDatabase() {
     await db.run('ALTER TABLE packages ADD COLUMN deleted_at TEXT DEFAULT NULL');
   } catch (e) { /* column already exists */ }
 
+  // Migration: road route data from the pickup map (null for older packages)
+  for (const col of [
+    'distance_km REAL',
+    'eta_minutes REAL',
+    'pickup_lat REAL',
+    'pickup_lng REAL',
+    'dropoff_lat REAL',
+    'dropoff_lng REAL'
+  ]) {
+    try {
+      await db.run(`ALTER TABLE packages ADD COLUMN ${col} DEFAULT NULL`);
+    } catch (e) { /* column already exists */ }
+  }
+
   await db.run(`
     CREATE TABLE IF NOT EXISTS email_verification_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

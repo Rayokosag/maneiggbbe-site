@@ -148,6 +148,8 @@ async function openDetail(trackingNumber, focusUpdate = false) {
         document.getElementById('dWeight').textContent           = pkg.package.weight ? pkg.package.weight + ' kg' : '—';
         document.getElementById('dSpeed').textContent            = capitalize(pkg.package.speed || '—');
         document.getElementById('dPrice').textContent            = pkg.price || '—';
+        document.getElementById('dDistance').textContent         = pkg.route && pkg.route.distanceKm != null ? pkg.route.distanceKm + ' km' : '—';
+        document.getElementById('dEta').textContent              = pkg.route && pkg.route.etaMinutes != null ? pkg.route.etaMinutes + ' min' : '—';
         document.getElementById('dExpected').textContent         = pkg.expectedDelivery || '—';
         document.getElementById('dDesc').textContent             = pkg.package.description || '—';
         document.getElementById('newStatus').value               = pkg.status;

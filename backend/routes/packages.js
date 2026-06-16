@@ -40,6 +40,12 @@ async function formatPackage(pkg) {
       speed: pkg.speed,
       description: pkg.description
     },
+    route: {
+      distanceKm: pkg.distance_km ?? null,
+      etaMinutes: pkg.eta_minutes ?? null,
+      pickup: pkg.pickup_lat != null ? { lat: pkg.pickup_lat, lng: pkg.pickup_lng } : null,
+      dropoff: pkg.dropoff_lat != null ? { lat: pkg.dropoff_lat, lng: pkg.dropoff_lng } : null
+    },
     price: pkg.price,
     status: pkg.status,
     requestDate: pkg.request_date,
@@ -184,11 +190,21 @@ router.get('/:trackingNumber', async (req, res) => {
 
 // POST /api/packages - Create new package
 router.post('/', validatePackage, async (req, res) => {
-  const { sender, recipient, package: pkgInfo, price, expectedDelivery } = req.body;
+  const { sender, recipient, package: pkgInfo, price, expectedDelivery,
+          distanceKm, etaMinutes, pickupCoords, dropoffCoords } = req.body;
   const db = getDb();
 
   const trackingNumber = 'MNG' + Math.floor(100000 + Math.random() * 900000);
   const requestDate = new Date().toISOString();
+
+  // Normalize optional route data from the map (null if pins weren't set)
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const distance_km = num(distanceKm);
+  const eta_minutes = num(etaMinutes);
+  const pickup_lat = pickupCoords ? num(pickupCoords.lat) : null;
+  const pickup_lng = pickupCoords ? num(pickupCoords.lng) : null;
+  const dropoff_lat = dropoffCoords ? num(dropoffCoords.lat) : null;
+  const dropoff_lng = dropoffCoords ? num(dropoffCoords.lng) : null;
 
   let customerId = null;
   const authHeader = req.headers['authorization'];
@@ -207,14 +223,16 @@ router.post('/', validatePackage, async (req, res) => {
       INSERT INTO packages (
         tracking_number, customer_id, sender_name, sender_phone, sender_address, sender_city, sender_zip, sender_email,
         recipient_name, recipient_phone, recipient_address, recipient_city, recipient_zip, recipient_email,
-        weight, speed, description, price, status, request_date, expected_delivery
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending Pickup', ?, ?)
+        weight, speed, description, price, status, request_date, expected_delivery,
+        distance_km, eta_minutes, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending Pickup', ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       trackingNumber, customerId,
       sender.name, sender.phone, sender.address, sender.city, sender.zip, sender.email || null,
       recipient.name, recipient.phone, recipient.address, recipient.city, recipient.zip, recipient.email || null,
       pkgInfo.weight, pkgInfo.speed, pkgInfo.description || '',
-      price, requestDate, expectedDelivery
+      price, requestDate, expectedDelivery,
+      distance_km, eta_minutes, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng
     ]);
 
     const formattedDate = new Date().toLocaleDateString('en-US', {

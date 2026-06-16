@@ -7,11 +7,11 @@ A package delivery tracking website for **Maneiggbbe Delivery Service & Technolo
 ## Quick Start (Local Development)
 
 ```bash
-cd server
+cd backend
 npm install
 npm start
 ```
-Open http://localhost:3000
+Open http://localhost:3000 (the backend serves the frontend and the API)
 
 ## Features
 
@@ -26,29 +26,32 @@ Open http://localhost:3000
 
 ```
 maneiggbbe-delivery/
-├── index.html                # Homepage
-├── tracking.html             # Track packages
-├── request-pickup.html       # Request a pickup
-├── login.html                # Admin login
-├── admin.html                # Admin dashboard
-├── customer-login.html       # Customer login
-├── register.html             # Customer signup
-├── forgot-password.html      # Password reset
-├── reset-password.html       # Reset password
-├── customer-dashboard.html   # Customer dashboard
-├── css/styles.css            # Styles
-├── js/                       # Frontend scripts
-├── images/                   # Logo & images
-├── server/                   # Backend (Node.js)
+├── frontend/                 # Static site (HTML/CSS/vanilla JS)
+│   ├── index.html            # Homepage
+│   ├── tracking.html         # Track packages
+│   ├── request-pickup.html   # Request a pickup (with Leaflet map + routing)
+│   ├── login.html            # Admin login
+│   ├── admin.html            # Admin dashboard
+│   ├── customer-login.html   # Customer login
+│   ├── register.html         # Customer signup
+│   ├── forgot-password.html  # Password reset
+│   ├── reset-password.html   # Reset password
+│   ├── customer-dashboard.html
+│   ├── css/                  # Styles
+│   ├── js/                   # Frontend scripts
+│   └── images/               # Logo & images
+├── backend/                  # Node.js + Express API (serves the frontend too)
+├── osrm/                     # Self-hosted OSRM routing service (Docker)
 └── Dockerfile                # Docker deployment
 ```
 
 ## Tech Stack
 
-- **Frontend:** HTML, CSS, JavaScript
+- **Frontend:** HTML, CSS, vanilla JavaScript (Leaflet for maps)
 - **Backend:** Node.js, Express
 - **Database:** Turso (LibSQL cloud database)
-- **Hosting:** Koyeb
+- **Routing:** OSRM (self-hosted, see `osrm/`)
+- **Hosting:** Railway (CDN/SSL via Cloudflare)
 - **Domain:** Namecheap
 
 ## Default Login
@@ -77,28 +80,28 @@ maneiggbbe-delivery/
 
 ## Deployment
 
-### Environment Variables (Koyeb)
+Hosted on **Railway**, fronted by **Cloudflare** (CDN + SSL). See `update.md`
+for the full list of required environment variables (Turso, JWT/session secrets,
+Google OAuth, Resend email, CORS origins, etc.).
 
-```
-TURSO_DATABASE_URL=libsql://your-database.turso.io
-TURSO_AUTH_TOKEN=your-token
-PORT=3000
-```
-
-### Deploy to Koyeb
+### Deploy to Railway
 
 1. Push code to GitHub
-2. Create Koyeb service from GitHub repo
-3. Select Dockerfile as builder
-4. Add environment variables
-5. Deploy
+2. Create a Railway service from the GitHub repo (uses the `Dockerfile`)
+3. Add environment variables (see `update.md`)
+4. Deploy — Railway auto-redeploys on push to `main`
+
+> The OSRM routing service is a **separate** Railway service (Root Directory =
+> `osrm`). See `osrm/README.md` for setup and the `OSRM_URL` wiring.
 
 ## Services Used
 
 | Service | Purpose | Cost |
 |---------|---------|------|
-| Koyeb | Hosting | Free |
+| Railway | Hosting (app + OSRM) | Hobby (~$5/mo) |
+| Cloudflare | CDN, SSL, DNS | Free |
 | Turso | Database | Free (9GB) |
+| Resend | Email | Free tier |
 | Namecheap | Domain | Paid |
 | GitHub | Code repo | Free |
 
