@@ -1,4 +1,4 @@
-# Maneigbbe Delivery — Update Log
+# Maneiggbbe Delivery — Update Log
 
 ## Session Updates
 
@@ -56,14 +56,14 @@
 | `SESSION_SECRET` | Express session secret |
 | `NODE_ENV` | Set to `production` |
 | `PORT` | `3000` |
-| `TURSO_DATABASE_URL` | `libsql://maneigbbe-rayokosag.aws-us-west-2.turso.io` |
+| `TURSO_DATABASE_URL` | `libsql://maneiggbbe-rayokosag.aws-us-west-2.turso.io` |
 | `TURSO_AUTH_TOKEN` | Turso database auth token |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `GOOGLE_CALLBACK_URL` | `https://maneiggbbe-site-production.up.railway.app/api/customers/auth/google/callback` |
 | `CORS_ORIGINS` | `https://www.maneiggbbe.com,https://maneiggbbe.com` |
 | `RESEND_API_KEY` | Resend API key for email |
-| `EMAIL_FROM` | `Maneigbbe Delivery <noreply@maneiggbbe.com>` |
+| `EMAIL_FROM` | `Maneiggbbe Delivery <noreply@maneiggbbe.com>` |
 | `BASE_URL` | `https://www.maneiggbbe.com` |
 | `ADMIN_EMAIL` | Admin email to receive pickup alerts |
 

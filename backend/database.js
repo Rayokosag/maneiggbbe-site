@@ -2,7 +2,7 @@ const { createClient } = require('@libsql/client/web');
 const bcrypt = require('bcryptjs');
 
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL || 'libsql://maneigbbe-rayokosag.aws-us-west-2.turso.io',
+  url: process.env.TURSO_DATABASE_URL || 'libsql://maneiggbbe-rayokosag.aws-us-west-2.turso.io',
   authToken: process.env.TURSO_AUTH_TOKEN
 });
 

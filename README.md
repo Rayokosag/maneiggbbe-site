@@ -1,6 +1,6 @@
-# Maneigbbe Delivery
+# Maneiggbbe Delivery
 
-A package delivery tracking website for **Maneigbbe Delivery Service & Technology Inc**.
+A package delivery tracking website for **Maneiggbbe Delivery Service & Technology Inc**.
 
 **Live Site:** https://www.maneiggbbe.com
 
@@ -25,7 +25,7 @@ Open http://localhost:3000
 ## Project Structure
 
 ```
-maneigbbe-delivery/
+maneiggbbe-delivery/
 ├── index.html                # Homepage
 ├── tracking.html             # Track packages
 ├── request-pickup.html       # Request a pickup

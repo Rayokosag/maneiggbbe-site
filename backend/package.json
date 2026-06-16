@@ -1,7 +1,7 @@
 {
-  "name": "maneigbbe-delivery-server",
+  "name": "maneiggbbe-delivery-server",
   "version": "1.0.0",
-  "description": "Backend API for Maneigbbe Delivery tracking service",
+  "description": "Backend API for Maneiggbbe Delivery tracking service",
   "main": "server.js",
   "engines": {
     "node": "20.x"
